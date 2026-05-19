@@ -2,7 +2,7 @@
 
 A runnable reference implementation of a multi-agent architecture for infrastructure incident investigation.
 
-This repo accompanies the article ["Why One AI Agent Is Never Enough: A Multi-Agent Architecture for Infrastructure Observability"](https://medium.com/@kinjaloza61/). It exists so the patterns described in the article can be inspected, run, and modified — not just read about.
+This repo accompanies the article "Why One AI Agent Is Never Enough: A Multi-Agent Architecture for Infrastructure Observability." It exists so the patterns described in the article can be inspected, run, and modified — not just read about.
 
 > **Scope:** This is a pattern reference, not a production system. The architecture, code, and failure-mode discussion are intended for engineers evaluating multi-agent designs for observability work. The telemetry sources are mocked; the model layer can run against any chat-completion endpoint or a deterministic fake.
 
@@ -47,7 +47,7 @@ Known failure modes the system runs into: [`docs/failure-modes.md`](docs/failure
 
 ```bash
 # clone and enter
-git clone https://github.com/kinjalvaishnav/multi-agent-observability-demo
+git clone https://github.com/Kinjal-Oza/multi-agent-observability-demo
 cd multi-agent-observability-demo
 
 # install
