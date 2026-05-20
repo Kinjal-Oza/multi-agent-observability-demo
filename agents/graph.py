@@ -1,8 +1,13 @@
-"""Graph wiring.
+"""Graph wiring — six-stage pipeline.
 
-The state graph below mirrors the four-role architecture described in the
-README. When `langgraph` is installed, the graph is built with its API for
-parity with production deployments. When it isn't, the same sequence runs
+Supervisor → Telemetry → Reasoning → Falsifier → Counterfactual → Action
+
+The Falsifier and Counterfactual Simulator
+are now first-class stages between Reasoning and Action, making falsification
+and outcome prediction mandatory before any remediation is recommended.
+
+When `langgraph` is installed, the graph is built with its API for parity
+with production deployments. When it isn't, the same sequence runs
 synchronously through a tiny pure-Python orchestrator — so the demo is
 runnable in environments where pulling in heavy deps is undesirable.
 """
@@ -11,6 +16,8 @@ from __future__ import annotations
 from typing import Callable
 
 from agents.action import action_step
+from agents.counterfactual import counterfactual_step
+from agents.falsifier import falsifier_step
 from agents.reasoning import reasoning_step
 from agents.state import InvestigationState
 from agents.supervisor import supervisor_step
@@ -18,10 +25,12 @@ from agents.telemetry import telemetry_step
 
 
 _PIPELINE: list[tuple[str, Callable[[InvestigationState], InvestigationState]]] = [
-    ("supervisor", supervisor_step),
-    ("telemetry",  telemetry_step),
-    ("reasoning",  reasoning_step),
-    ("action",     action_step),
+    ("supervisor",     supervisor_step),
+    ("telemetry",      telemetry_step),
+    ("reasoning",      reasoning_step),
+    ("falsifier",      falsifier_step),
+    ("counterfactual", counterfactual_step),
+    ("action",         action_step),
 ]
 
 

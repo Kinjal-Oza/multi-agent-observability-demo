@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Agent Observability — Interactive Walkthrough</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --lav:#E8E3F5;--tea:#C8E6E0;--pch:#FAD9C5;
+  --mau:#D4B5C5;--off:#FCFAF7;--ink:#3D3548;
+  --ink2:#6B5F7A;--sh:0 4px 24px rgba(61,53,72,.08);
+  --r:16px;--ez:cubic-bezier(.4,0,.2,1);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--off);color:var(--ink);line-height:1.65;min-height:100vh}
+header{padding:2.25rem 2rem 1.75rem;background:linear-gradient(135deg,var(--lav) 0%,var(--tea) 100%);
+  text-align:center;border-bottom:2px solid var(--mau)}
+header h1{font-size:1.9rem;font-weight:700;color:var(--ink);margin-bottom:.5rem}
+header .sub{color:var(--ink2);font-size:.95rem;max-width:600px;margin:0 auto}
+.badge{display:inline-block;background:var(--pch);color:var(--ink);
+  font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:20px;
+  margin-top:.6rem;letter-spacing:.04em}
+nav.tabs{display:flex;gap:0;padding:0 1.5rem;background:var(--lav);
+  overflow-x:auto;border-bottom:2px solid var(--mau)}
+.tab-btn{padding:.75rem 1.25rem;border:none;background:transparent;cursor:pointer;
+  font-size:.88rem;font-weight:600;color:var(--ink2);
+  border-bottom:3px solid transparent;white-space:nowrap;
+  transition:all 200ms;flex-shrink:0}
+.tab-btn.active{color:var(--ink);border-bottom-color:var(--ink)}
+.tab-btn:hover:not(.active){color:var(--ink);background:rgba(255,255,255,.35)}
+.panel{display:none;padding:2rem;max-width:1100px;margin:0 auto;
+  animation:fadeUp .35s var(--ez)}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+h2{font-size:1.25rem;font-weight:700;margin-bottom:1.1rem;color:var(--ink)}
+h3{font-size:.95rem;font-weight:700;margin-bottom:.65rem;color:var(--ink)}
+
+/* ── SHARED PILL ── */
+.pill{display:inline-block;padding:.18rem .55rem;border-radius:20px;
+  font-size:.73rem;font-weight:600;margin:.15rem .1rem 0 0}
+.p-pch{background:var(--pch);color:var(--ink)}
+.p-lav{background:var(--lav);color:var(--ink)}
+.p-tea{background:var(--tea);color:var(--ink)}
+.mono{font-family:'SFMono-Regular',Consolas,monospace;font-size:.76rem;
+  background:var(--lav);padding:.12rem .38rem;border-radius:4px;color:var(--ink2)}
+
+/* ── ARCHITECTURE ── */
+.pipe-strip{display:flex;align-items:center;gap:.4rem;padding:.9rem 1.25rem;
+  background:var(--tea);border-radius:var(--r);margin-bottom:1.5rem;
+  overflow-x:auto;flex-wrap:nowrap}
+.pip{background:white;padding:.35rem .85rem;border-radius:8px;
+  font-size:.79rem;font-weight:700;color:var(--ink);white-space:nowrap;
+  box-shadow:var(--sh)}
+.pip.new{background:var(--pch)}
+.pip-sep{color:var(--ink2);font-size:.9rem;flex-shrink:0;padding:0 .1rem}
+.agents-grid{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;
+  margin-bottom:1.5rem}
+.agent-card{background:white;border-radius:var(--r);box-shadow:var(--sh);
+  padding:1rem;width:152px;text-align:center;cursor:pointer;
+  transition:all 220ms var(--ez);border:2px solid transparent;
+  position:relative}
+.agent-card:hover{transform:translateY(-4px);
+  box-shadow:0 10px 32px rgba(61,53,72,.14)}
+.agent-card.sel{border-color:var(--ink);background:var(--lav)}
+.agent-card svg{width:80px;height:88px;display:block;margin:0 auto .5rem}
+.agent-card .aname{font-size:.84rem;font-weight:700;color:var(--ink)}
+.agent-card .arole{font-size:.71rem;color:var(--ink2);margin-top:.12rem}
+.novel-badge{position:absolute;top:.5rem;right:.5rem;background:var(--pch);
+  color:var(--ink);font-size:.6rem;font-weight:700;padding:.1rem .35rem;
+  border-radius:10px}
+.info-box{background:white;border-radius:var(--r);box-shadow:var(--sh);
+  padding:1.5rem;border-left:4px solid var(--mau)}
+.info-box .ib-title{font-size:1.05rem;font-weight:700;margin-bottom:.5rem}
+.info-box p{font-size:.88rem;line-height:1.6;color:var(--ink2);margin-bottom:.75rem}
+.info-box .files{margin-top:.75rem}
+.info-box .files span{display:block;font-size:.75rem;color:var(--ink2);margin-bottom:.3rem}
+
+/* ── PLAY ── */
+.play-top{display:flex;align-items:center;gap:.85rem;margin-bottom:1.25rem;
+  flex-wrap:wrap}
+.btn-play{background:var(--ink);color:white;border:none;border-radius:12px;
+  padding:.7rem 1.5rem;font-size:.95rem;font-weight:700;cursor:pointer;
+  transition:opacity 200ms;min-width:110px}
+.btn-play:hover{opacity:.85}
+.btn-reset{background:white;color:var(--ink);border:2px solid var(--mau);
+  border-radius:12px;padding:.65rem 1.1rem;font-size:.88rem;font-weight:600;
+  cursor:pointer;transition:all 200ms}
+.btn-reset:hover{background:var(--lav)}
+.sp-wrap{display:flex;gap:.35rem;margin-left:auto}
+.sp-btn{background:var(--lav);border:2px solid transparent;border-radius:8px;
+  padding:.3rem .7rem;cursor:pointer;font-size:.8rem;font-weight:600;
+  color:var(--ink2);transition:all 200ms}
+.sp-btn.on{border-color:var(--ink);color:var(--ink);background:white}
+.prog-track{height:6px;background:var(--lav);border-radius:3px;
+  margin-bottom:1.5rem;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;width:0%;
+  background:linear-gradient(90deg,var(--tea),var(--mau));
+  transition:width 700ms var(--ez)}
+.story-agents{display:flex;gap:.75rem;justify-content:center;
+  margin-bottom:1.5rem;flex-wrap:wrap}
+.sa{text-align:center;cursor:default;transition:all 600ms var(--ez);
+  opacity:.28;width:88px}
+.sa.on{opacity:1}
+.sa svg{width:66px;height:72px;display:block;margin:0 auto .4rem;
+  transition:filter 600ms var(--ez)}
+.sa.on svg{filter:drop-shadow(0 6px 14px rgba(61,53,72,.22))}
+.sa .sa-name{font-size:.69rem;font-weight:700;color:var(--ink2)}
+.sa.on .sa-name{color:var(--ink)}
+.speech-box{background:white;border:2px solid var(--mau);border-radius:var(--r);
+  padding:1.2rem 1.4rem;box-shadow:var(--sh);min-height:90px;margin-bottom:1.25rem}
+.speech-tag{font-size:.7rem;font-weight:700;color:var(--ink2);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:.45rem}
+.speech-txt{font-size:.875rem;line-height:1.6;color:var(--ink)}
+.audit-panel{background:var(--lav);border-radius:var(--r);padding:1rem}
+.audit-panel h4{font-size:.75rem;font-weight:700;color:var(--ink2);
+  margin-bottom:.7rem;text-transform:uppercase;letter-spacing:.06em}
+.audit-entry{background:white;border-radius:8px;padding:.45rem .75rem;
+  margin-bottom:.45rem;font-size:.76rem;color:var(--ink);
+  border-left:3px solid var(--tea);animation:slid .4s ease-out}
+@keyframes slid{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.audit-empty{font-size:.8rem;color:var(--ink2);text-align:center;padding:.5rem}
+.done-msg{background:var(--tea);border-radius:var(--r);padding:1rem 1.5rem;
+  font-weight:700;font-size:.9rem;color:var(--ink);text-align:center;
+  margin-top:1rem;display:none}
+
+/* ── NOVEL ── */
+.novel-intro{font-size:.9rem;color:var(--ink2);margin-bottom:1.5rem;line-height:1.6}
+.novel-rows{display:flex;flex-direction:column;gap:1.25rem}
+.novel-row{display:grid;grid-template-columns:1fr 60px 1fr;gap:1rem;
+  align-items:start}
+@media(max-width:640px){.novel-row{grid-template-columns:1fr}}
+.nc{background:white;border-radius:var(--r);box-shadow:var(--sh);padding:1.1rem 1.25rem}
+.nc .nc-mech{font-size:.73rem;font-weight:700;background:var(--pch);
+  color:var(--ink);padding:.15rem .5rem;border-radius:20px;
+  display:inline-block;margin-bottom:.5rem}
+.nc h4{font-size:.88rem;font-weight:700;margin-bottom:.4rem;color:var(--ink)}
+.nc p{font-size:.82rem;line-height:1.5;color:var(--ink2)}
+.nc.bad{border-left:4px solid var(--mau);opacity:.8}
+.nc.good{border-left:4px solid var(--tea)}
+.vs-mid{display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-weight:700;color:var(--ink2);padding-top:1.8rem}
+.row-hdr{display:grid;grid-template-columns:1fr 60px 1fr;gap:1rem;
+  margin-bottom:.5rem;padding:0 .1rem}
+.row-hdr span{font-size:.78rem;font-weight:700;color:var(--ink2);text-align:center}
+@media(max-width:640px){.row-hdr{display:none}}
+
+/* ── MECHANISMS ── */
+.claims-list{list-style:none;display:flex;flex-direction:column;gap:1rem}
+.ci{background:white;border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.ci-hdr{display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;
+  cursor:pointer;transition:background 200ms;user-select:none}
+.ci-hdr:hover{background:var(--lav)}
+.ci-num{background:var(--ink);color:white;width:28px;height:28px;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.76rem;font-weight:700;flex-shrink:0}
+.ci-title{font-weight:700;font-size:.9rem;flex:1;color:var(--ink)}
+.chev{color:var(--ink2);transition:transform 220ms;font-size:.85rem;flex-shrink:0}
+.ci.open .chev{transform:rotate(90deg)}
+.ci-body{display:none;padding:0 1.25rem 1.25rem;border-top:1px solid var(--lav)}
+.ci.open .ci-body{display:block}
+.ci-quote{font-size:.82rem;color:var(--ink2);font-style:italic;
+  margin:.75rem 0;padding:.55rem 1rem;border-left:3px solid var(--mau);
+  background:var(--off);border-radius:0 8px 8px 0;line-height:1.55}
+.impl{display:flex;flex-direction:column;gap:.35rem;margin-top:.5rem}
+.impl-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;
+  padding:.38rem 0;border-bottom:1px solid var(--lav);font-size:.78rem}
+.impl-row:last-child{border-bottom:none}
+.impl-row .el{color:var(--ink2)}
+.impl-row code{font-family:'SFMono-Regular',Consolas,monospace;font-size:.73rem;
+  background:var(--lav);padding:.1rem .33rem;border-radius:4px;color:var(--ink)}
+.dep-note{margin-top:1rem;padding:.7rem .9rem;background:var(--lav);
+  border-radius:8px;font-size:.77rem;color:var(--ink2)}
+.dep-note b{color:var(--ink);display:block;margin-bottom:.3rem}
+
+/* ── NUMBERS ── */
+.headline-metrics{display:grid;grid-template-columns:repeat(3,1fr);
+  gap:1rem;margin-bottom:1.75rem}
+@media(max-width:540px){.headline-metrics{grid-template-columns:1fr 1fr}}
+.hm{background:white;border-radius:var(--r);box-shadow:var(--sh);
+  padding:1.1rem;text-align:center}
+.hm .big{font-size:2rem;font-weight:700;color:var(--ink);line-height:1}
+.hm .lbl{font-size:.7rem;color:var(--ink2);margin-top:.35rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.05em}
+.mcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.mcard{background:white;border-radius:var(--r);box-shadow:var(--sh);padding:1.25rem}
+.mcard h3{font-size:.88rem;font-weight:700;margin-bottom:1rem;color:var(--ink)}
+.bchart{display:flex;flex-direction:column;gap:.6rem}
+.brow{display:flex;align-items:center;gap:.7rem;font-size:.78rem}
+.blbl{width:155px;flex-shrink:0;color:var(--ink2)}
+.bbg{flex:1;height:17px;background:var(--lav);border-radius:9px;overflow:hidden}
+.bfill{height:100%;border-radius:9px;width:0%;
+  background:linear-gradient(90deg,var(--tea),var(--mau));
+  transition:width 1.1s var(--ez)}
+.bval{width:38px;text-align:right;font-weight:700;color:var(--ink);font-size:.8rem}
+.mcard p{font-size:.76rem;color:var(--ink2);margin-top:.8rem;line-height:1.45}
+.run-cmd{background:var(--ink);color:var(--tea);font-family:monospace;
+  font-size:.82rem;padding:1rem 1.25rem;border-radius:var(--r);
+  margin-top:1.5rem;letter-spacing:.03em}
+
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:1ms!important}
+}
+@media(max-width:768px){
+  header h1{font-size:1.4rem}
+  .panel{padding:1.25rem}
+  .headline-metrics{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Multi-Agent Observability</h1>
+  <p class="sub">Breaking the Confirmation Cascade — Verifiable Multi-Agent Reasoning for Infrastructure Incidents</p>
+  <div class="badge">Production-Minded · 6-Stage Pipeline · Adversarial Falsification</div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" data-tab="arch">Architecture</button>
+  <button class="tab-btn" data-tab="play">▶ Play the Incident</button>
+  <button class="tab-btn" data-tab="novel">What's Novel</button>
+  <button class="tab-btn" data-tab="mechanisms">Design Mechanisms</button>
+  <button class="tab-btn" data-tab="numbers">Numbers</button>
+</nav>
+
+<!-- ═══════════════════ ARCHITECTURE ═══════════════════ -->
+<div id="arch" class="panel active">
+  <h2>Six-Stage Pipeline</h2>
+  <div class="pipe-strip">
+    <div class="pip">Alert</div><div class="pip-sep">→</div>
+    <div class="pip">Supervisor</div><div class="pip-sep">→</div>
+    <div class="pip">Telemetry</div><div class="pip-sep">→</div>
+    <div class="pip new">Reasoning ★</div><div class="pip-sep">→</div>
+    <div class="pip new">Falsifier ★</div><div class="pip-sep">→</div>
+    <div class="pip new">Counterfactual ★</div><div class="pip-sep">→</div>
+    <div class="pip new">Action ★</div>
+  </div>
+  <p style="font-size:.82rem;color:var(--ink2);margin-bottom:1.25rem">
+    ★ = implements a primary mechanism &nbsp;·&nbsp; Click any agent card to see details
+  </p>
+
+  <div class="agents-grid" id="agentGrid"></div>
+  <div class="info-box" id="infoBox">
+    <div class="ib-title">Select an agent above to explore its role</div>
+    <p>Each agent in the pipeline has a distinct responsibility. The four novel agents (Reasoning, Falsifier, Counterfactual, Action) implement the primary design mechanisms.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════ PLAY ═══════════════════ -->
+<div id="play" class="panel">
+  <h2>payments-service Incident — End-to-End</h2>
+  <div class="play-top">
+    <button class="btn-play" id="playBtn" onclick="togglePlay()">▶ Play</button>
+    <button class="btn-reset" onclick="resetPlay()">↺ Reset</button>
+    <div class="sp-wrap">
+      <span style="font-size:.78rem;color:var(--ink2);align-self:center">Speed:</span>
+      <button class="sp-btn on" data-sp="1" onclick="setSpeed(this,1)">1×</button>
+      <button class="sp-btn" data-sp="0.5" onclick="setSpeed(this,0.5)">0.5×</button>
+      <button class="sp-btn" data-sp="2" onclick="setSpeed(this,2)">2×</button>
+    </div>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+  <div class="story-agents" id="storyAgents"></div>
+  <div class="speech-box">
+    <div class="speech-tag" id="speechTag">Waiting…</div>
+    <div class="speech-txt" id="speechTxt">Press Play to start the incident walkthrough. Watch each agent activate in sequence and build the audit trail.</div>
+  </div>
+  <div class="audit-panel">
+    <h4>Audit Trail</h4>
+    <div id="auditTrail"><div class="audit-empty">No entries yet.</div></div>
+  </div>
+  <div class="done-msg" id="doneMsg">
+    ✓ Investigation complete — hypothesis confirmed, counterfactual computed, Tier-2 action queued for human approval.
+  </div>
+</div>
+
+<!-- ═══════════════════ NOVEL ═══════════════════ -->
+<div id="novel" class="panel">
+  <h2>What No Shipping Product Combines (Yet)</h2>
+  <p class="novel-intro">
+    Most observability AI tools run a confirmation cascade: findings → hypothesis → action. Every agent in the pipeline works to confirm the first guess, not challenge it. This implementation adds four mechanisms that break the cascade.
+  </p>
+  <div class="row-hdr">
+    <span>What most tools do</span><span>vs</span><span>What this adds</span>
+  </div>
+  <div class="novel-rows">
+    <div class="novel-row">
+      <div class="nc bad">
+        <div class="nc-mech">Hypothesis</div>
+        <h4>Free-text assertions</h4>
+        <p>Hypothesis statements are strings. No link to the evidence that supports them. Cannot be verified or cross-checked programmatically.</p>
+      </div>
+      <div class="vs-mid">→</div>
+      <div class="nc good">
+        <div class="nc-mech">Mechanism 1</div>
+        <h4>Provenance-bound claims</h4>
+        <p>Every <code style="font-family:monospace;font-size:.78rem;background:var(--lav);padding:.1rem .3rem;border-radius:3px">Claim</code> must cite ≥1 Finding ID at construction time. Ungrounded claims are rejected with <code style="font-family:monospace;font-size:.78rem;background:var(--lav);padding:.1rem .3rem;border-radius:3px">ValueError</code>. The audit trail records each dropped claim.</p>
+      </div>
+    </div>
+    <div class="novel-row">
+      <div class="nc bad">
+        <div class="nc-mech">Verification</div>
+        <h4>No adversarial check</h4>
+        <p>The reasoning agent builds a hypothesis. No agent is tasked with disproving it. The pipeline assumes the first hypothesis is correct and proceeds to action.</p>
+      </div>
+      <div class="vs-mid">→</div>
+      <div class="nc good">
+        <div class="nc-mech">Mechanism 2</div>
+        <h4>Adversarial Falsifier</h4>
+        <p>A dedicated agent tries to disprove the hypothesis using the same findings. Returns {confirmed, contested, refuted}. A <b>refuted</b> verdict is a hard veto — autonomous action is blocked entirely.</p>
+      </div>
+    </div>
+    <div class="novel-row">
+      <div class="nc bad">
+        <div class="nc-mech">Pre-action</div>
+        <h4>Approve blindly</h4>
+        <p>The approver sees "run this playbook." No prediction of what the system will look like after the action. The outcome is unknown until after execution.</p>
+      </div>
+      <div class="vs-mid">→</div>
+      <div class="nc good">
+        <div class="nc-mech">Mechanism 3</div>
+        <h4>Counterfactual simulation</h4>
+        <p>Before the action is queued for approval, the pipeline predicts metric deltas <b>with confidence bounds</b>. The approver sees: "p99 latency will drop 65–80%, auth-service unaffected."</p>
+      </div>
+    </div>
+    <div class="novel-row">
+      <div class="nc bad">
+        <div class="nc-mech">Confidence</div>
+        <h4>Raw LLM score</h4>
+        <p>Confidence = whatever the model says (e.g. "I'm 90% confident"). These scores are notoriously over-confident and uncalibrated. Brier score is never reported.</p>
+      </div>
+      <div class="vs-mid">→</div>
+      <div class="nc good">
+        <div class="nc-mech">Mechanism 4</div>
+        <h4>Calibrated confidence</h4>
+        <p>Final = 0.4×(LLM score) + 0.4×(corpus prior) + 0.2×(falsification modifier). Brier score and ECE are measurable and reported. Formula is inspectable, not a black box.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MECHANISMS ═══════════════════ -->
+<div id="mechanisms" class="panel">
+  <h2>Design Mechanisms — Mapped to Implementation</h2>
+  <p style="font-size:.85rem;color:var(--ink2);margin-bottom:1.25rem">
+    Each primary claim is cross-referenced to the file and function implementing it. Click to expand.
+  </p>
+  <ul class="claims-list">
+
+    <li class="ci open">
+      <div class="ci-hdr" onclick="toggleClaim(this)">
+        <div class="ci-num">1</div>
+        <div class="ci-title">Provenance-Bound Causal Claims</div>
+        <div class="chev">›</div>
+      </div>
+      <div class="ci-body">
+        <div class="ci-quote">A computer-implemented system in which a reasoning agent emits a hypothesis comprising one or more provenance-bound claims, each comprising one or more references to finding identifiers, wherein the system rejects any claim lacking at least one finding-identifier reference.</div>
+        <div class="impl">
+          <div class="impl-row"><div class="el">Claim dataclass with supported findings</div><code>agents/state.py — class Claim</code></div>
+          <div class="impl-row"><div class="el">Rejection of empty finding IDs</div><code>agents/state.py — Claim.__post_init__()</code></div>
+          <div class="impl-row"><div class="el">Parser dropping ungrounded claims</div><code>agents/reasoning.py — _parse_claims()</code></div>
+          <div class="impl-row"><div class="el">Audit trail records dropped claims</div><code>agents/reasoning.py — reasoning_step()</code></div>
+          <div class="impl-row"><div class="el">LLM prompt requiring SUPPORTS citations</div><code>agents/llm.py — DeterministicFake</code></div>
+        </div>
+        <div class="dep-note"><b>Test coverage:</b> tests/test_state.py::test_claim_requires_supporting_findings &nbsp;·&nbsp; tests/test_reasoning.py::test_reasoning_produces_provenance_bound_claims</div>
+      </div>
+    </li>
+
+    <li class="ci">
+      <div class="ci-hdr" onclick="toggleClaim(this)">
+        <div class="ci-num">2</div>
+        <div class="ci-title">Adversarial Hypothesis Falsification</div>
+        <div class="chev">›</div>
+      </div>
+      <div class="ci-body">
+        <div class="ci-quote">The system further comprising an adversarial falsifier agent that, given the hypothesis and the finding set, returns a verdict from a finite set {confirmed, contested, refuted}, wherein a refuted verdict prevents downstream autonomous action.</div>
+        <div class="impl">
+          <div class="impl-row"><div class="el">Falsifier agent</div><code>agents/falsifier.py — falsifier_step()</code></div>
+          <div class="impl-row"><div class="el">FalsificationResult with verdict field</div><code>agents/state.py — class FalsificationResult</code></div>
+          <div class="impl-row"><div class="el">Verdict vocabulary enforcement</div><code>agents/state.py — FalsificationVerdict Literal</code></div>
+          <div class="impl-row"><div class="el">Refuted verdict blocks action</div><code>agents/action.py — falsifier veto block</code></div>
+          <div class="impl-row"><div class="el">Budget extension on non-refuted</div><code>agents/falsifier.py — budget extension logic</code></div>
+        </div>
+        <div class="dep-note"><b>Test coverage:</b> tests/test_falsifier.py::test_falsifier_verdict_in_valid_set &nbsp;·&nbsp; tests/test_action.py::test_action_falsifier_veto_overrides_recommendation</div>
+      </div>
+    </li>
+
+    <li class="ci">
+      <div class="ci-hdr" onclick="toggleClaim(this)">
+        <div class="ci-num">3</div>
+        <div class="ci-title">Counterfactual Outcome Simulation</div>
+        <div class="chev">›</div>
+      </div>
+      <div class="ci-body">
+        <div class="ci-quote">The system further comprising a counterfactual outcome simulator that, given a proposed remediation action and a current state, returns a set of predicted state deltas with associated confidence bounds prior to any execution of the proposed action.</div>
+        <div class="impl">
+          <div class="impl-row"><div class="el">Simulator agent</div><code>agents/counterfactual.py — counterfactual_step()</code></div>
+          <div class="impl-row"><div class="el">CounterfactualPrediction dataclass</div><code>agents/state.py — class CounterfactualPrediction</code></div>
+          <div class="impl-row"><div class="el">PredictedDelta with bounds</div><code>agents/state.py — class PredictedDelta</code></div>
+          <div class="impl-row"><div class="el">Deterministic causal rule table</div><code>agents/counterfactual.py — _CAUSAL_RULES</code></div>
+          <div class="impl-row"><div class="el">Pre-execution placement in pipeline</div><code>agents/graph.py — counterfactual before action</code></div>
+        </div>
+        <div class="dep-note"><b>Test coverage:</b> tests/test_counterfactual.py::test_counterfactual_populates_field &nbsp;·&nbsp; tests/test_counterfactual.py::test_counterfactual_deltas_have_valid_bounds</div>
+      </div>
+    </li>
+
+    <li class="ci">
+      <div class="ci-hdr" onclick="toggleClaim(this)">
+        <div class="ci-num">4</div>
+        <div class="ci-title">Calibrated Confidence via Learned Prior</div>
+        <div class="chev">›</div>
+      </div>
+      <div class="ci-body">
+        <div class="ci-quote">The system further comprising a calibrated confidence module that computes a posterior confidence as a weighted ensemble of (a) language-model self-reported confidence, (b) a prior probability derived from a historical incident corpus, and (c) a falsification-score modifier.</div>
+        <div class="impl">
+          <div class="impl-row"><div class="el">Calibration module</div><code>agents/confidence.py — calibrate()</code></div>
+          <div class="impl-row"><div class="el">Formula: 0.4×raw + 0.4×prior + 0.2×modifier</div><code>agents/confidence.py — _compute()</code></div>
+          <div class="impl-row"><div class="el">Historical corpus prior</div><code>corpus/causal_prior.py — prior_for()</code></div>
+          <div class="impl-row"><div class="el">Post-falsification update</div><code>agents/confidence.py — update_with_falsification()</code></div>
+          <div class="impl-row"><div class="el">Component breakdown in state</div><code>agents/state.py — class CalibratedConfidence</code></div>
+        </div>
+        <div class="dep-note"><b>Test coverage:</b> tests/test_confidence.py::test_calibrate_returns_calibrated_confidence &nbsp;·&nbsp; tests/test_confidence.py::test_compute_formula</div>
+      </div>
+    </li>
+
+    <li class="ci">
+      <div class="ci-hdr" onclick="toggleClaim(this)">
+        <div class="ci-num" style="background:var(--ink2)">5–12</div>
+        <div class="ci-title">Dependent Claims (Defensive Scope)</div>
+        <div class="chev">›</div>
+      </div>
+      <div class="ci-body">
+        <div class="dep-note">
+          <b>Extension mechanisms inherited from provisional v1 — defensive scope:</b>
+          Claim 5: Tiered action classification (Tier 1/2/3) · Claim 6: Six-gate compound safety condition · Claim 7: Kill switch via distributed key-value store · Claim 8: Per-tool circuit breaker · Claim 9: Parallel Specialist Agent fan-out · Claim 10: Checkpointing to durable storage · Claim 11: State compression · Claim 12: Slack approval integration
+        </div>
+        <p style="font-size:.8rem;color:var(--ink2);margin-top:.75rem">Extension mechanisms provide defensive scope. They are valid as long as the primary claims (1–4) are valid. See <span class="mono">docs/implementation-map.md</span> for full implementation cross-reference.</p>
+      </div>
+    </li>
+
+  </ul>
+</div>
+
+<!-- ═══════════════════ NUMBERS ═══════════════════ -->
+<div id="numbers" class="panel">
+  <h2>Benchmark Results — DeterministicFake Backend, N=100</h2>
+  <div class="headline-metrics">
+    <div class="hm"><div class="big" id="n-scenarios">0</div><div class="lbl">Scenarios</div></div>
+    <div class="hm"><div class="big" id="n-tests">0</div><div class="lbl">Tests Passing</div></div>
+    <div class="hm"><div class="big" id="n-agents">6</div><div class="lbl">Pipeline Agents</div></div>
+  </div>
+  <div class="mcards">
+
+    <div class="mcard">
+      <h3>Hypothesis Quality</h3>
+      <div class="bchart">
+        <div class="brow"><div class="blbl">Hypothesis accuracy</div><div class="bbg"><div class="bfill" data-w="78"></div></div><div class="bval">0.78</div></div>
+        <div class="brow"><div class="blbl">Action precision</div><div class="bbg"><div class="bfill" data-w="64"></div></div><div class="bval">0.64</div></div>
+      </div>
+      <p>Hypothesis accuracy: fraction of scenarios where a word from the true cause pattern appears in the hypothesis summary. Action precision: fraction where the recommended action type matches ground truth. Both are word-overlap metrics — intentionally approximate for a synthetic corpus.</p>
+    </div>
+
+    <div class="mcard">
+      <h3>Confidence Calibration</h3>
+      <div class="bchart">
+        <div class="brow"><div class="blbl">Brier score (↓ better)</div><div class="bbg"><div class="bfill" data-w="20"></div></div><div class="bval">0.199</div></div>
+        <div class="brow"><div class="blbl">ECE (↓ better)</div><div class="bbg"><div class="bfill" data-w="34"></div></div><div class="bval">0.337</div></div>
+        <div class="brow"><div class="blbl">Random baseline ECE</div><div class="bbg"><div class="bfill" data-w="25" style="opacity:.4"></div></div><div class="bval">0.250</div></div>
+      </div>
+      <p>ECE is high (0.337) because DeterministicFake returns fixed confidence values that don't adapt to each scenario. With a real LLM that adjusts confidence per-scenario, ECE drops substantially. This is expected behaviour and is disclosed in docs/methodology.md.</p>
+    </div>
+
+    <div class="mcard">
+      <h3>Falsifier Performance</h3>
+      <div class="bchart">
+        <div class="brow"><div class="blbl">Falsifier precision</div><div class="bbg"><div class="bfill" data-w="100"></div></div><div class="bval">1.00</div></div>
+        <div class="brow"><div class="blbl">Falsifier recall</div><div class="bbg"><div class="bfill" data-w="89"></div></div><div class="bval">0.89</div></div>
+      </div>
+      <p>Precision 1.00: when the falsifier says "confirmed," the hypothesis is correct in every case. Recall 0.89: of all actually-correct hypotheses, 89% are correctly confirmed. The 11% gap reflects genuinely ambiguous scenarios where the falsifier downgrades to "contested."</p>
+    </div>
+
+    <div class="mcard">
+      <h3>Calibration Formula</h3>
+      <div style="background:var(--lav);border-radius:12px;padding:1rem;font-family:monospace;font-size:.82rem;line-height:2;color:var(--ink)">
+        final = clip(<br>
+        &nbsp;&nbsp;<span style="color:#8C7DA0">0.4</span> × raw_llm<br>
+        &nbsp;&nbsp;+ <span style="color:#8C7DA0">0.4</span> × corpus_prior<br>
+        &nbsp;&nbsp;+ <span style="color:#8C7DA0">0.2</span> × (1 − falsif_score)<br>
+        , 0, 1)
+      </div>
+      <p style="margin-top:.75rem">Each component is auditable. The corpus prior comes from 100 ground-truth incidents. The falsification modifier moves confidence down when the falsifier finds contradictions. No black-box weighting.</p>
+    </div>
+
+  </div>
+  <div class="run-cmd">$ python -m bench.run_benchmark<br><br>
+Scenarios:           100<br>
+Hypothesis accuracy: 0.78<br>
+Brier score:         0.199<br>
+ECE:                 0.337<br>
+Falsifier precision: 1.00<br>
+Falsifier recall:    0.89<br>
+Action precision:    0.64
+  </div>
+</div>
+
+<script>
+// ─── SVG CHARACTERS ───────────────────────────────────────────────────
+const SVG = {
+supervisor:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+<rect x="22" y="62" width="56" height="44" rx="10" fill="#FCFAF7" stroke="#D4B5C5" stroke-width="2"/>
+<rect x="42" y="62" width="16" height="14" rx="3" fill="#C8E6E0"/>
+<circle cx="50" cy="44" r="22" fill="#FAD9C5"/>
+<path d="M28 36 Q50 16 72 36 Q70 22 50 20 Q30 22 28 36Z" fill="#3D3548"/>
+<rect x="37" y="39" width="12" height="9" rx="4.5" fill="none" stroke="#8C7DA0" stroke-width="1.5"/>
+<rect x="51" y="39" width="12" height="9" rx="4.5" fill="none" stroke="#8C7DA0" stroke-width="1.5"/>
+<line x1="37" y1="43.5" x2="51" y2="43.5" stroke="#8C7DA0" stroke-width="1.5"/>
+<circle cx="42" cy="43.5" r="2.5" fill="#3D3548"/><circle cx="56" cy="43.5" r="2.5" fill="#3D3548"/>
+<path d="M42 53 Q50 58 58 53" stroke="#3D3548" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<path d="M34 72 Q27 82 36 90 Q45 96 50 91" stroke="#8C7DA0" stroke-width="3" fill="none" stroke-linecap="round"/>
+<circle cx="50" cy="93" r="3.5" fill="#8C7DA0"/>
+<rect x="60" y="70" width="16" height="22" rx="3" fill="#E8E3F5"/>
+<rect x="64" y="67" width="8" height="5" rx="2" fill="#D4B5C5"/>
+<line x1="63" y1="77" x2="73" y2="77" stroke="#3D3548" stroke-width="1.5"/>
+<line x1="63" y1="82" x2="73" y2="82" stroke="#3D3548" stroke-width="1.5"/>
+<line x1="63" y1="87" x2="69" y2="87" stroke="#3D3548" stroke-width="1.5"/>
+</svg>`,
+
+telemetry:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+<rect x="22" y="60" width="56" height="46" rx="10" fill="#C8E6E0" stroke="#8CBDB5" stroke-width="2"/>
+<circle cx="50" cy="43" r="21" fill="#FAD9C5"/>
+<path d="M29 38 Q50 20 71 38" fill="#3D3548"/>
+<rect x="25" y="28" width="50" height="16" rx="8" fill="#3D3548"/>
+<circle cx="44" cy="44" r="2.8" fill="#3D3548"/><circle cx="56" cy="44" r="2.8" fill="#3D3548"/>
+<path d="M44 53 Q50 56 56 53" stroke="#3D3548" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<circle cx="70" cy="78" r="14" fill="none" stroke="#3D3548" stroke-width="2.5"/>
+<circle cx="70" cy="78" r="8" fill="rgba(200,230,224,.6)" stroke="#8CBDB5" stroke-width="1.5"/>
+<line x1="80" y1="88" x2="90" y2="98" stroke="#3D3548" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="33" y1="70" x2="45" y2="75" stroke="#3D3548" stroke-width="1.5"/>
+<line x1="33" y1="76" x2="45" y2="80" stroke="#3D3548" stroke-width="1.5"/>
+<line x1="33" y1="82" x2="45" y2="82" stroke="#3D3548" stroke-width="1.5"/>
+</svg>`,
+
+reasoning:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+<rect x="10" y="55" width="50" height="50" rx="10" fill="#E8E3F5" stroke="#D4B5C5" stroke-width="2"/>
+<rect x="65" y="40" width="32" height="32" rx="4" fill="#3D3548"/>
+<text x="69" y="53" font-size="7" fill="#C8E6E0" font-family="monospace">y=f(x)</text>
+<text x="69" y="62" font-size="7" fill="#FAD9C5" font-family="monospace">P≈0.72</text>
+<circle cx="36" cy="36" r="20" fill="#FAD9C5"/>
+<path d="M16 30 Q36 14 56 30 Q54 18 36 16 Q18 18 16 30Z" fill="#3D3548"/>
+<circle cx="29" cy="36" r="2.8" fill="#3D3548"/><circle cx="43" cy="36" r="2.8" fill="#3D3548"/>
+<path d="M30 44 Q36 40 42 44" stroke="#3D3548" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<path d="M50 40 Q56 34 62 40" stroke="#3D3548" stroke-width="2" fill="none"/>
+<line x1="20" y1="75" x2="50" y2="75" stroke="#D4B5C5" stroke-width="1.5"/>
+<line x1="20" y1="83" x2="50" y2="83" stroke="#D4B5C5" stroke-width="1.5"/>
+<line x1="20" y1="91" x2="40" y2="91" stroke="#D4B5C5" stroke-width="1.5"/>
+</svg>`,
+
+falsifier:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+<rect x="22" y="62" width="56" height="44" rx="10" fill="#FAD9C5" stroke="#E8A898" stroke-width="2"/>
+<circle cx="50" cy="43" r="21" fill="#FAD9C5"/>
+<path d="M29 36 Q50 17 71 36 Q69 23 50 21 Q31 23 29 36Z" fill="#3D3548"/>
+<circle cx="42" cy="43" r="3" fill="#3D3548"/><circle cx="58" cy="43" r="3" fill="#3D3548"/>
+<path d="M38 38 Q42 35 46 38" stroke="#3D3548" stroke-width="2" fill="none"/>
+<path d="M54 38 Q58 35 62 38" stroke="#3D3548" stroke-width="2" fill="none"/>
+<path d="M43 53 Q50 49 57 53" stroke="#3D3548" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<circle cx="72" cy="74" r="12" fill="white" stroke="#E85A5A" stroke-width="2.5"/>
+<line x1="65" y1="67" x2="79" y2="81" stroke="#E85A5A" stroke-width="3" stroke-linecap="round"/>
+<line x1="79" y1="67" x2="65" y2="81" stroke="#E85A5A" stroke-width="3" stroke-linecap="round"/>
+<line x1="70" y1="74" x2="80" y2="64" stroke="#E85A5A" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="70" y1="74" x2="80" y2="84" stroke="#E85A5A" stroke-width="2.5" stroke-linecap="round"/>
+<rect x="28" y="68" width="32" height="8" rx="4" fill="#3D3548"/>
+<text x="31" y="75" font-size="6.5" fill="white" font-weight="bold">FALSIFIER</text>
+</svg>`,
+
+counterfactual:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+<path d="M14 70 Q14 108 50 108 Q86 108 86 70 Q86 56 78 56 L22 56 Q14 56 14 70Z" fill="#E8E3F5" stroke="#D4B5C5" stroke-width="2"/>
+<circle cx="50" cy="43" r="20" fill="#FAD9C5"/>
+<path d="M30 40 Q50 22 70 40 Q68 26 50 24 Q32 26 30 40Z" fill="#6B5F7A"/>
+<path d="M42 24 Q38 16 32 12" stroke="#8C7DA0" stroke-width="2" stroke-linecap="round"/>
+<path d="M58 24 Q62 16 68 12" stroke="#8C7DA0" stroke-width="2" stroke-linecap="round"/>
+<circle cx="43" cy="44" r="2.8" fill="#3D3548"/><circle cx="57" cy="44" r="2.8" fill="#3D3548"/>
+<path d="M43 52 Q50 57 57 52" stroke="#3D3548" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<ellipse cx="50" cy="82" rx="18" ry="14" fill="rgba(200,230,224,.7)" stroke="#8CBDB5" stroke-width="2"/>
+<polyline points="35,85 40,78 46,83 52,74 58,80 65,72" stroke="#3D3548" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="30" y="68" font-size="9" fill="#8C7DA0">✦</text>
+<text x="62" y="65" font-size="7" fill="#8C7DA0">✦</text>
+<text x="20" y="60" font-size="6" fill="#D4B5C5">✦</text>
+</svg>`,
+
+action:`<svg viewBox="0 0 100 110" xmlns="http://www.w3.org/2000/svg">
+<rect x="22" y="62" width="56" height="44" rx="10" fill="#C8E6E0" stroke="#8CBDB5" stroke-width="2"/>
+<circle cx="50" cy="70" r="5" fill="white" stroke="#8CBDB5" stroke-width="1.5"/>
+<line x1="50" y1="67" x2="50" y2="63" stroke="white" stroke-width="1.5"/>
+<line x1="47" y1="70" x2="43" y2="70" stroke="white" stroke-width="1.5"/>
+<line x1="53" y1="70" x2="57" y2="70" stroke="white" stroke-width="1.5"/>
+<line x1="50" y1="73" x2="50" y2="77" stroke="white" stroke-width="1.5"/>
+<circle cx="50" cy="43" r="21" fill="#FAD9C5"/>
+<path d="M29 37 Q50 18 71 37 Q69 23 50 21 Q31 23 29 37Z" fill="#3D3548"/>
+<circle cx="42" cy="43" r="2.8" fill="#3D3548"/><circle cx="58" cy="43" r="2.8" fill="#3D3548"/>
+<path d="M42 53 Q50 57 58 53" stroke="#3D3548" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<rect x="30" y="75" width="40" height="26" rx="5" fill="white" stroke="#8CBDB5" stroke-width="1.5"/>
+<line x1="36" y1="83" x2="64" y2="83" stroke="#C8E6E0" stroke-width="2"/>
+<line x1="36" y1="89" x2="64" y2="89" stroke="#C8E6E0" stroke-width="2"/>
+<line x1="36" y1="95" x2="54" y2="95" stroke="#C8E6E0" stroke-width="2"/>
+<text x="32" y="82" font-size="5.5" fill="#3D3548">✓ Gate 1: confidence</text>
+<text x="32" y="88" font-size="5.5" fill="#3D3548">✓ Gate 2: falsifier</text>
+<text x="32" y="94" font-size="5.5" fill="#3D3548">✓ Gate 3: counterfactual</text>
+</svg>`
+};
+
+// ─── AGENT DATA ────────────────────────────────────────────────────────
+const AGENTS = [
+  {id:"supervisor", name:"Supervisor", role:"Triage Doctor", novel:false,
+   color:"#E8E3F5",
+   desc:"Receives the alert, classifies severity, assigns an investigation budget (depth=2–5), and routes through the pipeline. Does not analyse — delegates with context.",
+   files:["agents/supervisor.py", "agents/state.py — InvestigationBudget"],
+   pills:["Budget Assignment","Severity Routing","Pipeline Orchestration"],
+   claim:null,
+   speech:"Alert received: payments-service p99 latency 820ms (threshold 500ms). Classification: application. Severity: page → assigning depth-5 investigation budget and routing to Telemetry.",
+   audit:"Supervisor | severity=page | budget=5 | routed → telemetry"},
+  {id:"telemetry", name:"Telemetry", role:"Field Detective", novel:false,
+   color:"#C8E6E0",
+   desc:"Queries the mock observability stack (Prometheus, distributed traces, service topology). Produces a list of structured Finding objects, each with a severity and timestamp.",
+   files:["agents/telemetry.py", "tools/prometheus_mock.py"],
+   pills:["Finding Collection","Prometheus Mock","Trace Correlation"],
+   claim:null,
+   speech:"Querying Prometheus… Found 3 findings: [F0] connection pool utilisation 98% on db-proxy (warning). [F1] DB query latency +340% since 14:23 UTC (warning). [F2] Active connections at system limit 50/50 (critical).",
+   audit:"Telemetry | 3 findings collected | F0:warning F1:warning F2:critical"},
+  {id:"reasoning", name:"Reasoning", role:"Hypothesis Engine", novel:true,
+   color:"#E8E3F5",
+   desc:"Forms a causal hypothesis using provenance-bound claims (Mechanism 1). Every claim must cite at least one Finding ID. Ungrounded claims are dropped and logged. Calls the confidence calibration module.",
+   files:["agents/reasoning.py — reasoning_step()", "agents/reasoning.py — _parse_claims()", "agents/confidence.py — calibrate()"],
+   pills:["Mechanism 1","Provenance Binding","Calibrated Confidence"],
+   claim:"Claim 1",
+   speech:"Hypothesis: connection pool exhaustion is causing query queuing and elevated p99 latency. CLAIM 1: 'Pool utilisation at 98%' [SUPPORTS: F0, F2]. CLAIM 2: 'DB latency spike correlated with pool onset at 14:23' [SUPPORTS: F1]. Calibrated confidence: 0.71 (LLM=0.72, prior=0.68).",
+   audit:"Reasoning | hypothesis formed | 2 provenance-bound claims | confidence=0.71"},
+  {id:"falsifier", name:"Falsifier", role:"Contrarian Agent", novel:true,
+   color:"#FAD9C5",
+   desc:"A dedicated adversarial agent that tries to disprove the leading hypothesis (Mechanism 2). Returns verdict ∈ {confirmed, contested, refuted}. A refuted verdict is a hard veto on autonomous action and triggers immediate escalation.",
+   files:["agents/falsifier.py — falsifier_step()", "agents/falsifier.py — _parse_falsification()", "agents/action.py — falsifier veto block"],
+   pills:["Mechanism 2","Adversarial Check","Verdict: confirmed/contested/refuted"],
+   claim:"Claim 2",
+   speech:"Examining 2 claims against 3 findings… CLAIM 1: supported by F0 and F2, no contradicting evidence found. CLAIM 2: supported by F1, no contradicting evidence. VERDICT: confirmed. Falsification score: 0.15. Updated confidence: 0.78.",
+   audit:"Falsifier | verdict=confirmed | falsification_score=0.15 | confidence updated to 0.78"},
+  {id:"counterfactual", name:"Counterfactual", role:"Outcome Simulator", novel:true,
+   color:"#E8E3F5",
+   desc:"Predicts post-remediation metric deltas with confidence bounds before the action is queued (Mechanism 3). Primary path is rule-based (testable, deterministic). Falls back to LLM-assisted prediction for unknown patterns.",
+   files:["agents/counterfactual.py — counterfactual_step()", "agents/counterfactual.py — _CAUSAL_RULES", "agents/state.py — PredictedDelta"],
+   pills:["Mechanism 3","Pre-Execution Prediction","Confidence Bounds"],
+   claim:"Claim 3",
+   speech:"Simulating: scale connection pool 10→30. Predicted deltas — (1) payments-service p99: −65% to −80% [120–185ms]. (2) auth-service latency: −2% to +2% (no impact). (3) db-proxy utilisation: recovers to 28–40%. Prediction confidence: 0.78 (rule-based).",
+   audit:"Counterfactual | method=rule_based | 3 deltas predicted | confidence=0.78"},
+  {id:"action", name:"Action", role:"Careful Nurse", novel:true,
+   color:"#C8E6E0",
+   desc:"Reads the falsifier verdict and counterfactual prediction before recommending (Design Mechanisms 2+3). Autonomous action gate requires: confidence ≥ 0.70 AND falsifier=confirmed AND counterfactual confidence ≥ 0.70. Tier 2 actions always require human approval.",
+   files:["agents/action.py — action_step()", "agents/action.py — AUTONOMOUS_CONFIDENCE_FLOOR", "agents/state.py — ActionRecommendation"],
+   pills:["Design Mechanisms 2+3","Safety Gates","Tier 1/2/3 Actions"],
+   claim:"Claims 2+3",
+   speech:"All 4 safety gates passed: confidence=0.78 ✓, falsifier=confirmed ✓, counterfactual_confidence=0.78 ✓, risk=Tier 2. Recommendation: scale payments-service connection pool 10→30 on db-proxy. Queued for human approval — autonomous action blocked (Tier 2).",
+   audit:"Action | recommendation=scale_connection_pool | risk=Tier2 | requires_approval=true"}
+];
+
+// ─── TAB SWITCHING ─────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='numbers') animateBars();
+  });
+});
+
+// ─── ARCHITECTURE ──────────────────────────────────────────────────────
+const grid = document.getElementById('agentGrid');
+AGENTS.forEach(ag=>{
+  const card = document.createElement('div');
+  card.className='agent-card';
+  card.innerHTML=`${SVG[ag.id]}
+    ${ag.novel?`<div class="novel-badge">${ag.claim}</div>`:''}
+    <div class="aname">${ag.name}</div>
+    <div class="arole">${ag.role}</div>`;
+  card.onclick=()=>selectAgent(ag,card);
+  grid.appendChild(card);
+});
+
+function selectAgent(ag,card){
+  document.querySelectorAll('.agent-card').forEach(c=>c.classList.remove('sel'));
+  card.classList.add('sel');
+  const box=document.getElementById('infoBox');
+  box.innerHTML=`
+    <div class="ib-title">${ag.name} — ${ag.role}</div>
+    <p>${ag.desc}</p>
+    <div>${ag.pills.map(p=>`<span class="pill ${ag.novel?'p-pch':'p-tea'}">${p}</span>`).join('')}</div>
+    <div class="files" style="margin-top:.8rem">
+      <span style="font-size:.75rem;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em">Implementation</span>
+      ${ag.files.map(f=>`<span class="mono" style="display:block;margin-top:.25rem">${f}</span>`).join('')}
+    </div>`;
+  box.style.borderLeftColor=ag.novel?'var(--mau)':'var(--tea)';
+}
+
+// ─── PLAY ──────────────────────────────────────────────────────────────
+let playState={step:-1,timer:null,speed:1,running:false};
+
+// Build story agent icons
+const saContainer=document.getElementById('storyAgents');
+AGENTS.forEach(ag=>{
+  const d=document.createElement('div');
+  d.className='sa';d.id='sa-'+ag.id;
+  d.innerHTML=SVG[ag.id]+`<div class="sa-name">${ag.name}</div>`;
+  saContainer.appendChild(d);
+});
+
+function togglePlay(){
+  if(playState.running){pausePlay();}
+  else{startPlay();}
+}
+function startPlay(){
+  if(playState.step>=AGENTS.length-1){resetPlay();return;}
+  playState.running=true;
+  document.getElementById('playBtn').textContent='⏸ Pause';
+  advance();
+}
+function pausePlay(){
+  playState.running=false;
+  document.getElementById('playBtn').textContent='▶ Resume';
+  if(playState.timer)clearTimeout(playState.timer);
+}
+function resetPlay(){
+  if(playState.timer)clearTimeout(playState.timer);
+  playState={step:-1,timer:null,speed:playState.speed,running:false};
+  document.getElementById('playBtn').textContent='▶ Play';
+  document.getElementById('progFill').style.width='0%';
+  document.getElementById('speechTag').textContent='Waiting…';
+  document.getElementById('speechTxt').textContent='Press Play to start the incident walkthrough.';
+  document.getElementById('auditTrail').innerHTML='<div class="audit-empty">No entries yet.</div>';
+  document.getElementById('doneMsg').style.display='none';
+  document.querySelectorAll('.sa').forEach(s=>s.classList.remove('on'));
+}
+function setSpeed(btn,sp){
+  document.querySelectorAll('.sp-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');playState.speed=sp;
+}
+function advance(){
+  playState.step++;
+  if(playState.step>=AGENTS.length){
+    playState.running=false;
+    document.getElementById('playBtn').textContent='↺ Replay';
+    document.getElementById('doneMsg').style.display='block';
+    return;
+  }
+  const ag=AGENTS[playState.step];
+  document.querySelectorAll('.sa').forEach(s=>s.classList.remove('on'));
+  document.getElementById('sa-'+ag.id).classList.add('on');
+  document.getElementById('speechTag').textContent=ag.name+' — '+ag.role;
+  document.getElementById('speechTxt').textContent=ag.speech;
+  document.getElementById('progFill').style.width=
+    (((playState.step+1)/AGENTS.length)*100)+'%';
+  const trail=document.getElementById('auditTrail');
+  if(playState.step===0)trail.innerHTML='';
+  const e=document.createElement('div');
+  e.className='audit-entry';e.textContent=ag.audit;
+  trail.appendChild(e);
+  if(playState.running){
+    const delay=Math.round(2200/playState.speed);
+    playState.timer=setTimeout(advance,delay);
+  }
+}
+
+// ─── MECHANISMS ─────────────────────────────────────────────────────
+function toggleClaim(hdr){
+  const item=hdr.closest('.ci');
+  item.classList.toggle('open');
+}
+
+// ─── NUMBERS ───────────────────────────────────────────────────────────
+let barsAnimated=false;
+function animateBars(){
+  if(barsAnimated)return;
+  barsAnimated=true;
+  // Headline counters
+  animateCount('n-scenarios',0,100,900);
+  animateCount('n-tests',0,64,900);
+  // Bars
+  document.querySelectorAll('.bfill').forEach(bar=>{
+    const w=parseInt(bar.dataset.w||0);
+    setTimeout(()=>{bar.style.width=w+'%';},200);
+  });
+}
+function animateCount(id,from,to,dur){
+  const el=document.getElementById(id);
+  if(!el)return;
+  const start=performance.now();
+  function tick(now){
+    const t=Math.min((now-start)/dur,1);
+    el.textContent=Math.round(from+(to-from)*t);
+    if(t<1)requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+// Animate bars if Numbers is the first visible tab
+window.addEventListener('load',()=>{
+  if(document.getElementById('numbers').classList.contains('active'))animateBars();
+});
+</script>
+</body>
+</html>

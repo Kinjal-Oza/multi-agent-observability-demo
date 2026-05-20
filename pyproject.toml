@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "multi-agent-observability-demo"
-version = "0.1.0"
-description = "Reference implementation of a multi-agent architecture for infrastructure incident investigation"
+version = "2.0.0"
+description = "Verifiable multi-agent incident reasoning with adversarial falsification and counterfactual outcome simulation"
 readme = "README.md"
 authors = [{ name = "Kinjal Vaishnav" }]
 license = { file = "LICENSE" }
@@ -21,10 +21,16 @@ openai = ["openai>=1.0"]
 anthropic = ["anthropic>=0.30"]
 dev = ["pytest>=8.0", "pytest-cov>=4.0", "ruff>=0.5"]
 
+[project.scripts]
+mao-benchmark = "bench.run_benchmark:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["agents*", "tools*"]
+include = ["agents*", "tools*", "corpus*", "bench*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+[tool.ruff]
+line-length = 100
