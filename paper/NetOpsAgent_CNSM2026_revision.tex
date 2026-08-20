@@ -1,0 +1,1001 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\kern-.125emX}}
+
+\begin{document}
+
+\title{NetOpsAgent: A Hierarchical Multi-Agent LLM Framework for Autonomous Cloud Infrastructure Incident Management}
+
+\author{\IEEEauthorblockN{Kinjal Vaishnav}
+\IEEEauthorblockA{Oracle, Seattle, WA, USA \\
+kinjaloza61@yahoo.com}
+}
+
+\maketitle
+
+\begin{abstract}
+Cloud infrastructure incidents cause significant service disruption, yet mean
+time to root cause remains long due to alert volume and telemetry complexity.
+We present NetOpsAgent, a hierarchical multi-agent large language model (LLM)
+framework for autonomous cloud network incident management. The architecture
+decomposes the investigation pipeline into four specialized agents---Supervisor,
+Telemetry Investigation, Reasoning, and Action---coordinated via a shared
+\texttt{InvestigationState} object. A confidence-gated tiered autonomy
+mechanism bounds autonomous action risk: low-confidence hypotheses escalate to
+human review; high-confidence hypotheses trigger Tier 1 remediation actions
+automatically. We evaluate on two independent, real fault-injection
+benchmarks: the AIOps Challenge 2020 KPI dataset (N=75 usable incidents) and
+RCAEval RE1 (N=75 independent microservice fault scenarios). Across six
+architectural configurations---including a raw-context fix, retrieval-augmented
+generation with and without relevance gating, and a test specifically designed
+to isolate the benefit of multi-agent decomposition---we find no statistically
+significant advantage of the multi-agent architecture over a single-agent
+baseline on either dataset (McNemar $p>0.05$ throughout), and a rule-based
+baseline remains competitive with both. We then test a targeted extension:
+adding a Falsifier agent that adversarially validates the Reasoning agent's
+hypothesis against evidence it did not use, mirroring the validation
+mechanism recent RCA multi-agent systems report gains from. This extension
+produces a statistically significant accuracy improvement on single-entity
+incidents (33.3\% vs.\ 21.3\% exact match, $p=0.023$) but a statistically
+significant regression on multi-service incidents (24.0\% vs.\ 42.7\%,
+$p<0.001$); tracing individual flips shows the extension has no
+service-dependency-graph awareness and repeatedly mistakes a downstream
+symptom for the root cause once more than one service is involved. Adding
+real service-topology data eliminates the regression ($p=0.50$, was
+$p<0.001$) but does not yet produce a gain there. A control test shows the
+AIOps gain comes from the Falsifier capability itself, not the multi-agent
+decomposition it was attached to: the same Falsifier on a single-agent
+hypothesis scores statistically indistinguishably from the multi-agent
+version ($p=1.0$ head-to-head). We report this result in full, characterize
+why self-reported LLM confidence fails to support safe autonomous action in
+this setting, and identify the likely mechanism (blind metric selection
+under multi-agent decomposition) behind the base architecture's
+underperformance. A reference implementation is publicly available under the
+MIT license.
+\end{abstract}
+
+\begin{IEEEkeywords}
+multi-agent LLM systems, AIOps incident management, autonomous root cause
+analysis, site reliability engineering, retrieval-augmented generation
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:intro}
+
+Site reliability engineering (SRE) in large-scale cloud environments faces a
+structural tension: incident frequency scales with system complexity, but the
+human capacity to investigate alerts does not. Mean time to root cause
+(MTTRC) for complex distributed system failures commonly exceeds 30--60
+minutes \cite{beyer2016sre,lim2018oncall}, driven by alert volume,
+heterogeneous telemetry sources, and the cognitive demands of causal reasoning
+under time pressure.
+
+Large language models (LLMs) offer a qualitatively different approach to this
+problem. Their capacity for instruction-following, tool use, and multi-step
+reasoning over unstructured text makes them natural candidates for incident
+investigation tasks that have historically required senior engineers. Yet
+naive application of a single LLM agent to incident response fails in
+practice: the context window fills with raw telemetry before the model can
+reason causally, and there is no principled mechanism for deciding when the
+agent's confidence is sufficient to act autonomously.
+
+We present NetOpsAgent, a hierarchical multi-agent LLM framework that
+addresses both limitations. The framework decomposes the investigation
+pipeline into four specialized agents---Supervisor, Telemetry Investigation,
+Reasoning, and Action---each responsible for a distinct phase of the incident
+response workflow. A shared \texttt{InvestigationState} object propagates
+structured findings between agents, enforcing context hygiene without loss of
+information. A confidence-gated tiered autonomy mechanism allows the system to
+act autonomously on high-confidence hypotheses while escalating uncertain
+cases to human operators.
+
+The framework is motivated by two observed failure modes in single-agent
+LLM-based incident response. First, \emph{context pollution}: when a single
+agent is given access to all observability tools, it accumulates raw metric
+time series, log lines, and configuration data in a single context window.
+The resulting context is too large and heterogeneous for reliable causal
+reasoning, particularly on application-layer incidents where the causal
+signal is weak relative to background telemetry noise. Second,
+\emph{uncalibrated autonomy}: without a principled confidence-scoring
+mechanism, an LLM agent either takes too many autonomous actions (increasing
+blast radius) or too few (eliminating the productivity benefit). NetOpsAgent
+is designed to address both failure modes; Section~\ref{sec:eval} reports how
+well that design holds up under controlled measurement.
+
+This paper makes four contributions: (1) the NetOpsAgent architecture and its
+design rationale; (2) a controlled empirical evaluation across two independent
+real datasets and six architectural configurations, showing that multi-agent
+decomposition and retrieval augmentation do not produce a significant
+improvement over a single-agent baseline for this task---including under a
+test designed specifically to favor the multi-agent hypothesis; (3) a
+failure-mode and confidence-calibration analysis, including a real finding
+that self-reported and self-consistency LLM confidence both fail to
+discriminate correct from incorrect hypotheses in this setting; and (4) a
+targeted extension experiment adding a Falsifier/validation agent, showing a
+statistically significant improvement on single-entity incidents and a
+statistically significant regression on multi-service incidents, with the
+divergence traced to a specific, addressable mechanism (missing
+service-dependency-graph awareness) rather than left as an unexplained split.
+
+\section{Related Work}
+\label{sec:related}
+
+\subsection{LLM Agents and Tool Use}
+ReAct \cite{yao2023react} established the observe-reason-act loop as the
+foundational pattern for LLM agents with external tool access. Subsequent
+work, including Toolformer \cite{schick2023toolformer} and function-calling
+APIs such as Gorilla \cite{patil2023gorilla}, demonstrated that LLMs can
+reliably invoke structured tools when given well-defined schemas. LangGraph
+\cite{langgraph2024} introduced stateful, cyclical agent graphs that allow
+persistent state across multiple tool invocations within an investigation
+session. NetOpsAgent builds directly on this infrastructure, using
+LangGraph's \texttt{StateGraph} as the orchestration primitive.
+
+\subsection{Anomaly Detection in Network Infrastructure}
+Classical approaches to network anomaly detection rely on threshold-based
+alerting, statistical process control, and ML classifiers trained on labeled
+KPI time series \cite{zhao2020aiops}. The AIOps Challenge benchmark series
+provides standardized KPI datasets from industrial operators, enabling
+community comparison, consistent with the broader move toward standardized
+observability data formats \cite{opentelemetry2024}. NetOpsAgent consumes the
+output of anomaly detection systems (the alert) as its input; it does not
+replace detection but addresses the investigation phase that follows.
+
+\subsection{AIOps and Automated Operations}
+The AIOps landscape covers a range of automation tasks from log parsing
+\cite{liu2023logprompt} to automated runbook execution \cite{winters2020seag}.
+Prior systems primarily use rule-based or ML-based pipelines with limited
+generalization across incident types. LLM-based systems offer generalization
+but introduce new failure modes (hallucination, context overflow) that
+structured multi-agent decomposition is designed to mitigate.
+
+\subsection{Benchmarks and Evaluation}
+SWE-bench \cite{jimenez2024swebench,jimenez2024swebenchverified} evaluates
+agents on asynchronous, low-stakes software tasks. The AIOps Challenge 2020
+KPI dataset \cite{zhao2020aiops} provides real-world KPI time-series from
+industrial operators. Our revised evaluation (Section~\ref{sec:eval}) draws
+ground-truth incident labels directly from that dataset and from RCAEval, a
+second independent fault-injection benchmark, rather than constructing
+author-labeled traces.
+
+\subsection{LLM Agents for IT Operations}
+Guo et al.\ \cite{guo2023chatgptevent} apply GPT-4 to log parsing with strong
+zero-shot performance, though limited to parsing accuracy rather than causal
+reasoning. Chen et al.\ \cite{chen2024eurosys} propose an LLM-based root
+cause analysis system for microservice failures using distributed traces.
+Luo et al.\ \cite{luo2022issre} propose a knowledge-graph approach to
+root-cause analysis for microservice systems. Roy et al.\
+\cite{roy2024llmrca} describe a single-agent LLM system for alert triage
+using retrieval-augmented generation over historical runbooks. NetOpsAgent
+differs in three ways: hierarchical multi-agent decomposition;
+confidence-gated tiered autonomy; and an empirical ablation directly
+measuring the contribution of multi-agent decomposition over a single-agent
+baseline (Section~\ref{sec:eval}).
+
+\subsection{Multi-Agent Coordination Frameworks}
+Multi-agent coordination has been studied extensively in classical AI under
+the umbrella of multi-agent systems (MAS). Modern LLM-based coordination
+frameworks differ from classical MAS in that agents communicate via natural
+language and structured JSON rather than formal ontologies. AutoGen
+\cite{wu2023autogen} and MetaGPT \cite{hong2023metagpt} demonstrated that
+conversational multi-agent patterns can solve software engineering tasks
+effectively. However, these frameworks optimize for task completion in
+low-risk settings. NetOpsAgent's coordination architecture targets
+reliability-critical contexts instead: typed state propagation (intended to
+prevent context pollution), confidence-gated action safety (intended to
+prevent incorrect autonomous actions), and full audit logging (enabling
+post-incident review). Section~\ref{sec:eval} evaluates how much the first of
+these---typed state propagation via multi-agent decomposition---actually
+contributes on real incident data.
+
+\subsection{Positioning Relative to Recent RCA Multi-Agent Systems}
+\label{sec:novelty}
+Two recent systems decompose root-cause analysis into specialized LLM agents
+and ground hypotheses in retrieved external knowledge, much as NetOpsAgent
+does. Flow-of-Action \cite{pei2025flowofaction} pairs a main investigation
+agent with auxiliary agents that retrieve, generate, and execute
+standard-operating-procedure (SOP) steps, reporting 64.01\% root-cause
+accuracy against a 35.50\% ReAct baseline on its own industrial benchmark.
+MA-RCA \cite{fu2026marca} separates a Retrieval Agent (which grounds
+hypotheses via RAG) from a Validation Agent (which verifies hypotheses
+through dynamic testing), reporting 95.2\% F1 on the Nezha microservice
+benchmark and 82.8\% F1 on a power-metering infrastructure dataset.
+
+NetOpsAgent's four-agent decomposition---Supervisor, Telemetry Investigation,
+Reasoning, Action, with RAG retrieval inside the Reasoning agent---is an
+instance of the same general pattern these two systems already establish:
+specialize by cognitive function, ground reasoning in retrieved precedent,
+and keep verification structurally separate from generation where possible.
+We do not claim architectural novelty over Flow-of-Action or MA-RCA, and we
+have narrowed the framing of this paper's contribution accordingly.
+
+What this paper contributes instead is a controlled empirical comparison,
+under matched task, telemetry, and LLM backbone conditions, of whether that
+general architectural pattern actually outperforms a single well-prompted
+agent on two independent real incident datasets. Section~\ref{sec:eval} finds
+that decomposition alone does not, in contrast to the substantial gains
+Flow-of-Action and MA-RCA report on their own benchmarks. We go one step
+further and test MA-RCA's specific mechanism---a dedicated validation
+stage---directly against our data (Section~\ref{sec:falsifier}): it helps on
+single-entity incidents and, without service-topology awareness, hurts on
+multi-service ones---a more specific, falsifiable account of \emph{when} this
+shared pattern pays off, not a blanket negative or an unqualified replication.
+
+This null result is consistent with concurrent findings outside RCA. Xu et
+al.\ \cite{xu2026rethinking} show \emph{homogeneous} multi-agent
+workflows---agents sharing one base model---are matched by a single
+well-tuned agent, and argue a real advantage requires \emph{heterogeneous}
+models; NetOpsAgent already satisfies that (GPT-4o for Reasoning, GPT-4o-mini
+for Telemetry, Section~\ref{sec:impl}) and still shows no gain. Su and Wu
+\cite{su2026outperform} explain why theoretically: decomposition helps for
+\emph{independent} subtasks and loses its advantage as subtasks become
+interdependent---closer to whole-incident diagnosis, where all telemetry
+must be integrated together, consistent with the blind-metric-selection
+mechanism in Section~\ref{sec:discussion}.A.
+
+\subsection{Confidence Estimation in LLM Systems}
+Calibrating LLM confidence is an active research area. Verbalized confidence
+elicitation---asking the model to produce a numeric confidence score as part
+of its output, in the spirit of chain-of-thought prompting
+\cite{wei2022cot}---has been shown to correlate with accuracy on some
+factual tasks, though calibration is known to degrade on out-of-distribution
+inputs \cite{guo2017calibration}. In the SRE context, confidence calibration
+carries operational weight: an overconfident incorrect hypothesis can trigger
+autonomous actions that extend an incident. Section~\ref{sec:eval} measures
+this directly rather than assuming it: on real incident data, verbalized
+confidence does not separate correct from incorrect hypotheses in our
+evaluation, and a self-consistency-based alternative fails for the same
+reason. Confidence calibration for this task class is an open problem, not a
+solved one.
+
+\section{Framework Architecture}
+\label{sec:arch}
+
+\subsection{System Overview}
+NetOpsAgent comprises four agents coordinated via a LangGraph
+\texttt{StateGraph}. All agents share a single \texttt{InvestigationState}
+\texttt{TypedDict} that accumulates findings, tool results, and confidence
+scores across the investigation lifecycle. The Supervisor Agent acts as the
+graph entry point and routing controller; the three worker
+agents---Telemetry Investigation, Reasoning, and Action---are dispatched
+sequentially or conditionally based on Supervisor routing decisions.
+
+A central design principle is context hygiene via decomposition: each agent
+receives only the information relevant to its task, not the full raw
+telemetry stream. The Telemetry Agent receives the alert trigger and produces
+structured findings; the Reasoning Agent receives those findings (not the raw
+tool responses) and produces a hypothesis; the Action Agent receives the
+hypothesis and confidence score. This staged information flow is intended to
+prevent context pollution from degrading reasoning quality; we test this
+intention directly in Section~\ref{sec:eval}. Fig.~\ref{fig:arch} shows the
+full architecture.
+
+\begin{figure*}[t]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  every node/.style={align=center},
+  box/.style={rectangle, rounded corners=2pt, minimum width=3.4cm, minimum height=1.5cm, text width=3.1cm, draw, thick},
+  arr/.style={-{Latex[length=2mm]}, thick},
+  darr/.style={-{Latex[length=2mm]}, thick, dashed, color=orange!80!black}
+]
+
+\node[font=\sffamily\bfseries\normalsize] at (5.4,7.6) {NetOpsAgent: Hierarchical Multi-Agent Architecture};
+
+\node[box, draw=blue!40!black, fill=blue!5, text=blue!30!black] (trig) at (0,6.3)
+  {\textbf{\color{blue!30!black}Incident Triggers}\\[2pt]\scriptsize Prometheus Alerts\\ \scriptsize Slack Commands\\ \scriptsize Log Anomalies};
+
+\node[box, draw=none, fill=blue!25!black, text=white, text width=3.6cm, minimum width=3.9cm] (sup) at (5.4,6.3)
+  {\textbf{Supervisor Agent}\\[2pt]\scriptsize Task Decomposition\\ \scriptsize Incident Classification\\ \scriptsize Agent Routing (LangGraph)};
+
+\draw[arr] (trig.east) -- (sup.west);
+
+\node[box, draw=orange!70!black, dashed, fill=white, minimum width=9.4cm, text width=9.0cm, minimum height=1.1cm] (state) at (5.4,4.7)
+  {\textbf{\color{orange!60!black}Shared Investigation State (InvestigationState)}\\[1pt]
+   \scriptsize incident\_id $\cdot$ findings $\cdot$ hypothesis $\cdot$ confidence $\cdot$ audit\_trail $\cdot$ escalation\_required};
+
+\draw[darr] (sup.south) -- (state.north);
+
+\node[box, draw=none, fill=green!22!black, text=white, minimum width=3.2cm] (tel) at (0,3.0)
+  {\textbf{Telemetry Agent}\\[2pt]\scriptsize Prometheus $\cdot$ Grafana\\ \scriptsize ELK $\cdot$ AppDynamics\\ \scriptsize Query-Observe-Refine\\ \scriptsize Max 15 tool calls\\ \scriptsize\textit{GPT-4o-mini}};
+
+\node[box, draw=none, fill=violet!45!black, text=white, minimum width=3.2cm] (rea) at (3.9,3.0)
+  {\textbf{Reasoning Agent}\\[2pt]\scriptsize RAG over postmortems\\ \scriptsize Change log context\\ \scriptsize Causal hypothesis gen.\\ \scriptsize Confidence scoring\\ \scriptsize\textit{GPT-4o}};
+
+\node[box, draw=none, fill=red!45!black, text=white, minimum width=3.2cm] (act) at (7.8,3.0)
+  {\textbf{Action Agent}\\[2pt]\scriptsize Tier 1: Autonomous\\ \scriptsize Tier 2: Human approval\\ \scriptsize Tier 3: Never auto\\ \scriptsize Full audit trail\\ \scriptsize\textit{GPT-4o}};
+
+\node[box, draw=none, fill=orange!75!red, text=white, minimum width=3.2cm] (gate) at (11.7,3.0)
+  {\textbf{Confidence Gate}\\[2pt]\scriptsize conf $\geq$ 0.75 $\to$ Tier 1\\ \scriptsize conf 0.6--0.75 $\to$ Approve\\ \scriptsize conf $<$ 0.6 $\to$ Escalate};
+
+\draw[darr] (state.220) -- ++(0,-0.5) -| (tel.north);
+\draw[darr] (state.250) -- (rea.north);
+\draw[darr] (state.290) -- ++(0,-0.5) -| (act.north);
+\draw[arr] (act.east) -- (gate.west);
+
+\node[box, draw=green!40!black, fill=green!8, text=green!25!black, minimum width=3.2cm, minimum height=1.3cm] (auto) at (0,0.6)
+  {\textbf{\color{green!25!black}Autonomous Action}\\[2pt]\scriptsize Pod restart $\cdot$ Rate limit\\ \scriptsize Cache flush $\cdot$ DNS update};
+
+\node[box, draw=orange!60!black, fill=orange!8, text=orange!35!black, minimum width=3.2cm, minimum height=1.3cm] (appr) at (3.9,0.6)
+  {\textbf{\color{orange!35!black}Human Approval}\\[2pt]\scriptsize Slack interactive msg\\ \scriptsize Rolling deploy $\cdot$ DB config};
+
+\node[box, draw=red!45!black, fill=red!6, text=red!35!black, minimum width=3.2cm, minimum height=1.3cm] (esc) at (7.8,0.6)
+  {\textbf{\color{red!35!black}Escalation}\\[2pt]\scriptsize PagerDuty $\cdot$ On-call eng.\\ \scriptsize Full audit trail attached};
+
+\draw[arr] (tel.south) -- (auto.north);
+\draw[arr] (rea.south) -- (appr.north);
+\draw[arr] (act.south) -- (esc.north);
+
+\node[box, draw=black!40, fill=black!3, minimum width=3.2cm, minimum height=2.9cm, text width=3.0cm, anchor=north west] (leg) at (10.2,1.3) {};
+\node[font=\bfseries\scriptsize, anchor=north] at (leg.north) {\vspace{2pt}Legend};
+\node[anchor=north west, text width=3.0cm, font=\scriptsize] at ([xshift=2pt,yshift=-14pt]leg.north west) {
+  \tikz\fill[blue!25!black] (0,0) rectangle (0.25,0.15); Orchestration\\[2pt]
+  \tikz\fill[green!22!black] (0,0) rectangle (0.25,0.15); Data retrieval\\[2pt]
+  \tikz\fill[violet!45!black] (0,0) rectangle (0.25,0.15); Reasoning / LLM\\[2pt]
+  \tikz\fill[red!45!black] (0,0) rectangle (0.25,0.15); Action execution\\[2pt]
+  {\color{orange!80!black}\tikz\draw[dashed,thick] (0,0.07) -- (0.25,0.07);} Shared state access
+};
+
+\end{tikzpicture}%
+}
+\caption{NetOpsAgent hierarchical multi-agent architecture for autonomous
+cloud network incident management. The Supervisor Agent routes incoming
+alerts to the Telemetry Investigation Agent, which executes iterative tool
+calls against mocked observability APIs. Structured findings propagate to the
+Reasoning Agent, which applies chain-of-thought reasoning and RAG retrieval to
+generate a root cause hypothesis with a confidence score. The Action Agent
+dispatches remediation actions according to the confidence-gated three-tier
+autonomy model. All agents share a single \texttt{InvestigationState} object.
+}
+\label{fig:arch}
+\end{figure*}
+
+\subsection{InvestigationState Schema}
+All agents communicate exclusively via a shared \texttt{InvestigationState}
+\texttt{TypedDict}. Table~\ref{tab:state} lists the key fields and their
+producing agents. This design enforces strict information boundaries: no
+agent reads from another agent's internal context; all inter-agent
+communication passes through typed fields with defined schemas. This is
+intended to prevent the context accumulation failure mode observed in
+single-agent baselines and provides a natural audit log---the final state
+object contains a complete record of every finding, hypothesis, and action
+decision.
+
+\begin{table}[h]
+\caption{InvestigationState Key Fields}
+\label{tab:state}
+\centering
+\begin{tabular}{lll}
+\toprule
+Field & Producer & Description \\
+\midrule
+\texttt{alert\_trigger} & External & Alert type, service, severity \\
+\texttt{routing\_plan} & Supervisor & Ordered tool query plan \\
+\texttt{findings} & Telemetry & Typed (signal, value, ts) list \\
+\texttt{rag\_context} & Reasoning & Top-5 postmortem chunks \\
+\texttt{hypothesis} & Reasoning & Root cause + mechanism \\
+\texttt{confidence} & Reasoning & Float [0,1] \\
+\texttt{actions\_taken} & Action & Dispatched action log \\
+\texttt{tool\_errors} & Telemetry & Schema/timeout failures \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Supervisor Agent}
+The Supervisor Agent receives the alert trigger, classifies the incident by
+layer (network, infrastructure, application) and severity, and generates a
+routing plan specifying which observability tools the Telemetry Agent should
+query. It also monitors investigation progress and can interrupt or redirect
+the pipeline if intermediate findings indicate a change in incident scope.
+
+\subsection{Telemetry Investigation Agent}
+The Telemetry Investigation Agent executes iterative tool calls against
+mocked observability APIs: Prometheus \cite{rabenstein2015prometheus}
+(metrics), ELK \cite{elastic2024elasticsearch} (logs), and a configuration
+management database (CMDB). It operates in a ReAct loop---querying, observing
+partial results, forming follow-up queries---until it has assembled
+sufficient evidence or exhausted its query budget. Its output is a structured
+findings object appended to \texttt{InvestigationState}: a typed list of
+(signal, value, timestamp, significance) tuples, not the raw API responses.
+This structured handoff is the primary mechanism by which context size is
+controlled between agents.
+
+\subsection{Reasoning Agent}
+The Reasoning Agent receives the structured findings from the Telemetry Agent
+and performs root cause hypothesis generation using chain-of-thought
+prompting \cite{wei2022cot} and retrieval-augmented generation (RAG)
+\cite{lewis2020rag}. It queries a FAISS \cite{johnson2021faiss} vector index
+of historical postmortem documents to retrieve precedent cases similar to the
+current incident findings. The final output is a hypothesis tuple:
+(root\_cause, mechanism, confidence\_score, supporting\_evidence,
+contradicting\_evidence).
+
+The confidence score (0--1) is derived from a structured self-evaluation
+prompt asking the model to rate evidence quality, hypothesis specificity, and
+absence of contradicting signals. This score drives the downstream
+action-safety gate; Section~\ref{sec:eval} evaluates how well it actually
+does so.
+
+\subsection{Action Agent and Confidence Gate}
+The Action Agent implements a three-tier autonomy model keyed on hypothesis
+confidence:
+\begin{itemize}
+  \item \textbf{Tier 1} ($c \geq 0.75$): Low-risk corrective actions (BGP
+  timer adjustments \cite{bjorklund2011netconf}, instance restarts, cache
+  flushes) executed autonomously.
+  \item \textbf{Tier 2} ($0.50 \leq c < 0.75$): Medium-risk actions
+  (configuration changes, traffic rerouting) queued for human approval with a
+  pre-populated runbook suggestion.
+  \item \textbf{Tier 3} ($c < 0.50$): High-risk actions (data migrations,
+  teardowns) never executed autonomously; human operator notified with full
+  investigation context.
+\end{itemize}
+All actions---autonomous and queued---are logged to
+\texttt{InvestigationState} with the full hypothesis evidence chain, enabling
+post-incident audit.
+
+\subsection{Falsifier Extension (Evaluated Separately from the Base Design)}
+\label{sec:falsifier-arch}
+Section~\ref{sec:eval} additionally evaluates an optional fifth agent, a
+Falsifier, inserted between the Reasoning and Action agents. Unlike the four
+agents above, it is not part of the base architecture evaluated in
+Sections~\ref{sec:eval}.A--\ref{sec:eval}.G; we describe it here and evaluate
+it as a separate extension in Section~\ref{sec:falsifier} because its
+contribution turns out to depend on incident structure in a way the base
+architecture's components do not. The Falsifier receives the Reasoning
+agent's hypothesis together with the complete raw evidence pool, including
+signals the Reasoning agent's summary did not surface, and is prompted to
+actively look for evidence that contradicts the hypothesis rather than to
+confirm it. It returns a \texttt{confirmed}/\texttt{contested}/\texttt{refuted}
+verdict; a \texttt{refuted} verdict with a concrete, better-supported
+alternative overrides the Reasoning agent's hypothesis before the Action
+agent acts on it. This mirrors the \emph{role} of MA-RCA's Validation Agent
+\cite{fu2026marca}, not its mechanism: MA-RCA executes dynamic checks against
+the system, while our Falsifier only re-examines existing telemetry via an
+LLM call---a cheaper, weaker proxy for the same role.
+
+\section{Implementation}
+\label{sec:impl}
+
+\subsection{Technology Stack}
+The prototype is implemented in Python 3.11. Agent orchestration uses
+LangGraph 0.1; tool management uses Google ADK. GPT-4o
+\cite{openai2023gpt4} drives the Supervisor and Reasoning agents; GPT-4o-mini
+drives the Telemetry Investigation agent. Section~\ref{sec:eval} reports
+measured, rather than prototype-anecdotal, latency and cost for this stack.
+
+Model assignment follows a cost/latency-vs-stakes tradeoff: the Telemetry
+Agent issues up to 15 tool calls per investigation, so its cost and latency
+compound with call volume, while the Supervisor and Reasoning agents each
+make a single higher-stakes call per incident. GPT-4o-mini is therefore used
+for telemetry investigation, and GPT-4o for supervision and final root-cause
+reasoning. Section~\ref{sec:eval}'s model-choice ablation supports this
+split: GPT-4o-mini matches GPT-4o's accuracy on AIOps and trails it on
+RCAEval, at roughly one-seventeenth the per-token cost.
+
+\subsection{Observability Tool Layer}
+All observability APIs are mocked via a deterministic trace-replay layer that
+emits realistic metric and log responses from stored scenario definitions.
+Tool failures are surfaced as structured exceptions---e.g., ``Prometheus
+query timed out after 10s; returned data covers 60\% of requested
+window''---so the agent can reason about data incompleteness rather than
+encountering a pipeline crash.
+
+\subsection{RAG Index Construction}
+The Reasoning Agent retrieves relevant historical incident context via vector
+similarity search over a RAG index. Index construction: postmortem documents
+are chunked into 512-token segments with 64-token overlap, embedded using
+\texttt{text-embedding-3-small} (1,536 dimensions, building on the
+dense-representation approach popularized for transformer encoders
+\cite{devlin2019bert}), and stored in a FAISS flat index
+\cite{johnson2021faiss}. At query time, the agent retrieves the top-5 most
+similar postmortem chunks by cosine similarity. Index freshness is maintained
+via a recency decay factor ($\lambda = 0.95$/month) applied to similarity
+scores before ranking. Section~\ref{sec:eval} additionally evaluates a
+generic, incident-independent version of this corpus with and without a
+relevance-gating threshold on retrieval.
+
+\subsection{Tool Validation and Error Handling}
+NetOpsAgent implements a three-layer error handling strategy. At the schema
+layer, tool invocations are validated against JSON Schema before execution;
+invalid calls return a structured error object the agent can reason about. At
+the execution layer, tool timeouts are capped per class (Prometheus: 10s,
+ELK: 15s, CMDB: 5s). At the state layer, tool failures are logged to
+\texttt{InvestigationState} and surfaced to the Supervisor for compensating
+routing.
+
+\subsection{Code Availability}
+The extraction pipeline and evaluation harness that produced every result in
+Section~\ref{sec:eval} of this paper---incident extraction, all six
+architectural configurations, the Falsifier extension, the topology-aware
+fix, the single-agent control test, and raw per-incident outputs---is
+available at \url{https://github.com/Kinjal-Oza/multi-agent-observability-demo} under
+the MIT license. Per Section~\ref{sec:latency}, this is the summary-based
+harness used for evaluation, not a full iterative tool-calling deployment
+against live observability APIs.
+
+\section{Evaluation}
+\label{sec:eval}
+
+\subsection{Dataset Construction}
+We evaluate on two independent real datasets, rather than one real dataset
+plus author-constructed synthetic scenarios as in our original submission.
+
+\textbf{AIOps Challenge 2020.} 81 ground-truth incidents from the public KPI
+dataset \cite{zhao2020aiops}; 75 usable after requiring a valid pre-incident
+baseline window (6 excluded). Ground-truth labels are taken directly from the
+dataset's published anomaly annotations---no author-assigned labels are used.
+
+\textbf{RCAEval RE1} (Zenodo, CC-BY-4.0). 75 independent fault-injection
+scenarios across three real deployed microservice systems (Online Boutique,
+Sock Shop, Train Ticket): one run is used per unique service$\times$fault-type
+combination, out of six repeated runs each ships with, to avoid
+pseudoreplication. Ground truth is the dataset's own injected fault label.
+
+Because both datasets carry externally published ground truth, this revision
+no longer requires the author-assigned synthetic labels and inter-rater
+reliability check ($\kappa$) \cite{cohen1960kappa} used in the original
+submission's 80-trace synthetic set---a source of potential labeling bias
+that this design removes rather than mitigates.
+
+\subsection{Baselines}
+Two baselines are evaluated on each dataset. The \emph{single-agent baseline}
+receives the same alert trigger and has access to the same tool schema as
+NetOpsAgent but runs as a single GPT-4o agent without the multi-agent
+decomposition. It is prompted with the same task description and terminates
+on the same completion condition (root cause hypothesis with confidence
+score). This baseline directly tests the contribution of hierarchical
+decomposition. The \emph{rule-based baseline} implements a fixed-heuristic
+classifier using metric-threshold crossing, representing a pre-LLM production
+approach.
+
+\subsection{Architectural Configurations Evaluated}
+Six configurations were run once each on each dataset, pre-registered before
+execution so that the reported outcome could not be selected after the fact:
+\begin{enumerate}
+  \item \textbf{Baseline} multi-agent (mini-summary $\to$ reasoning).
+  \item \textbf{Sort-fix}: rank findings by relative deviation from baseline,
+  not raw magnitude (AIOps only).
+  \item \textbf{Raw-context fix}: the Reasoning Agent sees raw signal data,
+  not only the Telemetry Agent's summary.
+  \item \textbf{+RAG}: real embeddings (\texttt{text-embedding-3-small}), a
+  21-chunk generic operational-knowledge corpus, top-5 retrieval.
+  \item \textbf{+RAG, gated}: as above, restricted to chunks with cosine
+  similarity $\geq 0.45$ (threshold fixed from a diagnostic sample collected
+  before this ablation, not tuned to its outcome).
+  \item \textbf{Fair context-pollution test}: the single-agent condition
+  receives a true unranked, unfiltered raw telemetry dump (the paper's own
+  definition of context pollution); the multi-agent condition's Telemetry
+  Agent performs real iterative, blind metric-name-based selection before
+  inspecting values (the paper's own definition of context hygiene via
+  decomposition). This is the only configuration in which either side has
+  actually been tested against the architecture's own motivating hypothesis.
+\end{enumerate}
+
+The generic RAG corpus (Section~\ref{sec:impl}) contains 21 chunks of general
+SRE operational knowledge---CPU, memory, disk, network-delay, network-loss,
+and database-layer triage patterns---authored before any evaluation ran, with
+no incident-specific text (no service names, timestamps, or dataset-derived
+content). Independence from the evaluation traces is therefore true by
+construction and directly verifiable by inspection, not merely asserted.
+
+\subsection{Results}
+Table~\ref{tab:aiops} and Table~\ref{tab:rcaeval} report exact-match accuracy
+for every configuration on both datasets. McNemar's test
+\cite{mcnemar1947test} on discordant pairs (single-agent-correct vs.\
+multi-agent-correct) returns $p>0.05$ for every configuration on both
+datasets except the fair context-pollution test, which returns $p=0.064$
+\emph{favoring the single agent}---the opposite direction from the paper's
+original hypothesis.
+
+\begin{table}[h]
+\caption{AIOps Challenge 2020 (N=75), exact match}
+\label{tab:aiops}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Configuration & Single-agent & Multi-agent \\
+\midrule
+Baseline & 24.0\% & 17.3\% \\
+Sort-fix & 20.0\% & 18.7\% \\
+Raw-context fix & 22.7\% & 22.7\% \\
++RAG & 24.0\% & 24.0\% \\
++RAG, gated & 22.7\% & 25.3\% \\
+Fair test (raw dump vs.\ iterative) & 25.3\% & 4.0\% \\
+Rule-based\footnotemark & \multicolumn{2}{c}{76.0\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+\footnotetext{Rule-based accuracy is on fault-type match only; its task is narrower by design and not directly comparable to the LLM configurations' root-cause-and-mechanism matching.}
+
+\begin{table}[h]
+\caption{RCAEval RE1 (N=75), exact match}
+\label{tab:rcaeval}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Configuration & Single-agent & Multi-agent \\
+\midrule
+Baseline & 41.3\% & 40.0\% \\
+Raw-context fix & 33.3\% & 37.3\% \\
++RAG & 29.3\% & 34.7\% \\
++RAG, gated & 29.3\% & 30.7\% \\
+Rule-based & 36.0\% & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{No configuration shows a statistically significant multi-agent
+advantage on either dataset.} A simple rule-based baseline is competitive
+with, or beats, both LLM architectures on AIOps. Two reviewer-requested
+ablations produced small, real, secondary effects worth reporting: RAG
+relevance gating reduced a CPU/disk over-retrieval bias (67/75 $\to$ 59/75
+guesses mentioning CPU or disk regardless of true cause) and modestly
+improved AIOps accuracy; and GPT-4o-mini, used in the single-agent role, was
+comparable to GPT-4o on AIOps (22.7\% both) but somewhat worse on RCAEval
+(26.7\% vs.\ 33.3\%) at roughly one-seventeenth the per-token cost.
+
+\subsection{Confidence Calibration}
+\label{sec:confidence}
+Table~\ref{tab:confidence} reports real confidence-discrimination data,
+replacing the original submission's confidence table. Verbalized
+self-reported confidence does \emph{not} discriminate correct from incorrect
+hypotheses: mean confidence for incorrect hypotheses is nearly identical to
+correct ones on both datasets. At the paper's proposed 0.75 autonomy gate,
+96--100\% of incorrect hypotheses would pass---essentially the same rate as
+correct hypotheses.
+
+\begin{table}[h]
+\caption{Confidence does not discriminate correct from incorrect hypotheses}
+\label{tab:confidence}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Signal (dataset, N) & Correct & Incorrect & Gate pass, incorrect \\
+\midrule
+Verbalized (AIOps, 75) & 0.86 & 0.85 & 96--100\% \\
+Verbalized (RCAEval, 75) & 0.90 & 0.87 & 96--100\% \\
+Self-consistency (AIOps, 30)\footnotemark & 0.98 & 0.93 & --- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+\footnotetext{Self-consistency confidence: 5 resamples at temperature 0.7, majority-vote agreement rate, on a fixed, non-cherry-picked N=30 subsample.}
+
+We also tried a real fix: self-consistency confidence (5 resamples at
+temperature 0.7, majority-vote agreement rate as the confidence proxy, on a
+fixed $N=30$ AIOps subsample). It also fails to discriminate (0.98 for
+correct vs.\ 0.93 for incorrect), because the model is frequently
+\emph{consistently} wrong---the same error repeats across resamples---which
+is a systematic-bias failure mode that resampling-based confidence cannot
+fix, unlike sampling-noise-based miscalibration. This is a real, publishable
+safety finding about the limits of LLM confidence gating for this task class,
+not a gap to paper over.
+
+\subsection{Latency and Cost}
+\label{sec:latency}
+Table~\ref{tab:latency} reports measured (not estimated) latency and cost on
+a 15-incident sample, using real wall-clock timers and OpenAI's published
+per-token pricing. This measures the summary-based evaluation harness used
+throughout this section, not a full iterative tool-calling implementation
+against live observability APIs; the two are not directly comparable, and we
+do not present the harness numbers as a validated production estimate.
+
+\begin{table}[h]
+\caption{Measured per-investigation latency and cost (N=15 sample)}
+\label{tab:latency}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Configuration & Latency (s) & Cost (\$) \\
+\midrule
+Single-agent & 0.75 & 0.0013 \\
+Multi-agent & 3.53 & 0.0010 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Threshold Sensitivity}
+The rule-based baseline's CPU threshold was swept from 50\% to 95\%:
+exact-or-partial accuracy ranged 73.3--81.3\% across the sweep, highest at the
+lowest threshold tried. The baseline is not strongly sensitive to this choice
+within a normal operating range, which we state explicitly rather than
+presenting any single threshold as if it had been tuned.
+
+\subsection{Falsifier Extension: A Conditional, Mechanistically-Explained Result}
+\label{sec:falsifier}
+None of the six configurations above give the multi-agent architecture a
+capability a single agent could not also have; they only reorganize what
+information the Reasoning agent sees. Flow-of-Action \cite{pei2025flowofaction}
+and MA-RCA \cite{fu2026marca} both report large gains from a different kind
+of addition: a genuinely new capability (executable SOP grounding, or a
+dedicated Validation Agent that dynamically tests each hypothesis). We
+pre-registered a targeted test of an LLM-based proxy for the latter, not true
+dynamic testing (Section~\ref{sec:falsifier-arch}): add the
+Falsifier described in Section~\ref{sec:falsifier-arch} on top of the
+raw-context-fix configuration, run once on both datasets, and report the
+result regardless of direction. Two implementation issues, found during a
+pre-run smoke test before any accuracy number was computed, were fixed and
+then locked: free-text alternatives could return a negation (``Low CPU
+Usage'') that the keyword scorer misread as a match, fixed by constraining
+alternatives to the same closed fault-category vocabulary used throughout
+this evaluation; and the initial adversarial prompt refuted nearly every
+hypothesis, including correct ones, fixed by requiring \texttt{confirmed} as
+the default absent concrete contradicting evidence. Both fixes were made on
+implementation grounds, not outcome grounds.
+
+\begin{table}[h]
+\caption{Falsifier extension: exact match, single run each dataset}
+\label{tab:falsifier}
+\centering
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Dataset (N=75) & Single-agent & +Falsifier & McNemar $p$ \\
+\midrule
+AIOps, multi-agent+Falsifier & 21.3\% & 33.3\% & 0.023 \\
+AIOps, single-agent+Falsifier & 21.3\% & 32.0\% & 0.077 \\
+RCAEval (multi-service) & 42.7\% & 24.0\% & $<0.001$ \\
+RCAEval, topology-aware & 42.7\% & 40.0\% & 0.50 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+The result is real and significant in both directions at once. On AIOps
+(single entity per incident), the extension corrected 11 wrong hypotheses to
+right and broke only 2 previously-correct ones---a significant improvement.
+On RCAEval (a real microservice call graph per incident), it corrected
+\emph{zero} wrong hypotheses and broke 12 previously-correct ones---a
+significant regression. Inspecting the broken RCAEval cases shows why: the
+Falsifier repeatedly overrides a correct root-cause service with a
+\emph{different} service that is also anomalous in the same window---textbook
+symptom propagation, where a downstream service degrades because of an
+upstream cause, not because it is the cause. Lacking service-dependency-graph
+awareness, the Falsifier cannot tell ``anomalous because it is the cause''
+from ``anomalous because it is a victim.'' This failure mode cannot occur on
+AIOps, where there is only one entity to reason about.
+
+The AIOps result above pairs the Falsifier with the multi-agent Reasoning
+hypothesis, leaving open whether the gain needs decomposition at all. A
+pre-registered control isolates this: the same Falsifier on the (reused,
+unchanged) single-agent hypothesis scores 21.3\%$\to$32.0\%, $p=0.077$,
+almost identical to the multi-agent version (33.3\%); a direct,
+incident-level comparison of the two returns $p=1.0$ (21 right under both,
+47 wrong under both, 4 vs.\ 3 on the rest)---statistically indistinguishable.
+The Falsifier capability drives the AIOps gain, not the decomposition it was
+attached to; crossing $p<0.05$ in one condition reflects how close the two
+estimates are, not a real architectural difference.
+
+This is a mechanistically explained finding: validation helps when the
+alternative space is one entity's own metrics, and hurts when it spans a call
+graph without topology awareness. We tested the fix directly: give the
+Falsifier each system's real service dependency graph (verified for Online
+Boutique and Sock Shop; a naming-convention proxy for Train Ticket's 64
+services) and instruct it that graph-connected co-anomalies are expected
+propagation, not independent evidence. This eliminates the regression
+(24.0\%$\to$40.0\%, statistically indistinguishable from single-agent's
+42.7\%, $p=0.50$ vs.\ $p<0.001$ before) but adds no gain: the topology-aware
+Falsifier made zero overrides in either direction across all 75 incidents,
+trading overconfidence for near-total caution rather than becoming
+discriminating. We report this as the honest current state---harm fixed,
+value not yet added.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Design Principles}
+Three principles motivated the original design; we revisit each against the
+measurements in Section~\ref{sec:eval}. \emph{Context hygiene via
+decomposition}: this is the architecture's central motivating hypothesis, and
+it is the one configuration in Table~\ref{tab:aiops} designed specifically to
+test it fairly (the fair context-pollution test) that shows the
+\emph{clearest} result---in the opposite direction from the hypothesis. The
+likely mechanism is that blind, values-withheld metric-name selection
+consistently defaults to generic, dataset-typical metric names regardless of
+which signal is actually anomalous, so the Telemetry Agent frequently
+investigates the wrong evidence before the Reasoning Agent ever sees it. We
+report this mechanism, rather than the original unqualified accuracy claim,
+as the paper's actual finding on this question. \emph{Asymmetric safety
+calibration}: an incorrect autonomous action in SRE extends an incident; an
+unnecessary escalation costs minutes. This asymmetry still argues for
+conservative confidence thresholds, accepting lower recall on autonomous
+resolution to preserve precision, consistent with the broader SRE practice of
+risk budgeting \cite{murphy2016embracingrisk}---independent of whether
+multi-agent decomposition itself proves beneficial. \emph{Observability of
+the agent system}: full logging of every tool call, inference input/output,
+and state transition is what made the confidence-discrimination failure in
+Section~\ref{sec:confidence} discoverable and reportable in the first place,
+rather than silently hidden behind a single aggregate accuracy number. That
+audit capability is a real, retained benefit of the architecture regardless
+of the accuracy result. Section~\ref{sec:falsifier}'s Falsifier extension
+sharpens this picture further: the verification capability that helped on
+single-entity incidents turned out not to need the multi-agent decomposition
+it was attached to either ($p=1.0$, single- vs.\ multi-agent+Falsifier)---
+value comes from the capability, not the agent count (Section~\ref{sec:novelty}).
+
+\subsection{Limitations}
+The evaluation has several meaningful limitations. First, AIOps Challenge
+2020 and RCAEval RE1 each cover a specific set of systems and fault types;
+their combined distribution may not represent all cloud environments.
+Second, RCAEval's ground truth is an injected fault label at the
+service/fault-type level, not a full causal narrative, capping how finely
+``exact match'' can be defined; AIOps's annotations have an analogous
+limitation. Third, confidence thresholds require recalibration against live
+data, and Section~\ref{sec:confidence} shows no threshold in the practical
+range currently provides useful safety discrimination for either signal
+tested. Fourth, all configurations were run once. Re-running an
+\emph{unchanged} prompt moved its own score by 8 points from sampling noise
+alone (RCAEval single-agent, 41.3\%$\to$33.3\% across otherwise-identical
+runs)---larger than most reported effects. A repeated-run protocol (3--5
+runs/condition) was not performed; point estimates should be read as
+indicative, and non-significant McNemar results are consistent with, not
+contradicted by, this noise level.
+
+\subsection{Threats to Validity}
+\emph{Internal validity}: the single-agent baseline uses the same tool schema
+and prompt length, controlling for information access; however, both baseline
+and treatment prompts were written by the same author, introducing potential
+optimization bias in either direction. \emph{External validity}: results are
+derived from two public benchmarks; generalization to other environments is
+plausible but unconfirmed. \emph{Construct validity}: the ``partial match''
+category used in earlier analyses conflates cases of varying usefulness to a
+human operator; Section~\ref{sec:eval}'s headline comparison therefore uses
+exact match, the stricter and less saturating of the two metrics.
+
+\subsection{Security and Trust Considerations}
+Autonomous LLM agents executing remediations in production infrastructure
+\cite{burns2016borg} introduce a distinct security surface. Three threat
+vectors warrant consideration before deployment: \emph{prompt injection via
+telemetry} (an adversary with log-pipeline write access could craft messages
+to manipulate the Reasoning or Action agent; mitigate via input sanitization
+at the tool boundary and treating tool outputs as data, not instructions);
+\emph{confidence score manipulation} (a poisoned RAG index could inflate
+confidence for incorrect hypotheses, an attack made easier by
+Section~\ref{sec:confidence}'s finding that confidence is already weakly
+tied to correctness; mitigate via restricted index write access and
+ingestion audits); and \emph{audit log integrity} (the
+\texttt{InvestigationState} trail is the accountability mechanism and should
+be written to an append-only, integrity-verified store). These do not
+disqualify autonomous operation, but make security review a prerequisite,
+not an afterthought.
+
+\subsection{Deployment Considerations}
+Production deployment raises engineering concerns not captured in the
+evaluation: alert bursts during cascading failures require a queuing layer
+(e.g., Alertmanager grouping) to avoid duplicate investigations; the 0.75
+Tier 1 confidence threshold used here should not be adopted without
+re-running Table~\ref{tab:confidence}'s discrimination analysis against a
+deployment's own incident history, since Section~\ref{sec:confidence} shows
+it is currently unsolved for this architecture; GPT-4o model updates may
+shift calibration or failure rates without notice, arguing for pinned
+versions or a transition to a version-controlled open-source model (Llama 3
+\cite{meta2024llama3}), re-measured per deployment rather than assumed; and
+the RAG index requires an active maintenance pipeline, since the recency
+decay factor ($\lambda=0.95$/month) only partially offsets staleness.
+
+\subsection{Future Work}
+Motivated directly by Section~\ref{sec:falsifier}: sharpen the
+topology-aware Falsifier's override decision to recover a genuine gain, and
+verify Train Ticket's full call graph beyond the naming-convention proxy
+used here. Beyond that: a production evaluation with real incident data,
+complemented by fault-injection studies \cite{basiri2016chaos}; a
+repeated-run protocol to separate real effects from single-run sampling
+noise; fine-tuning a smaller open-source model (Llama 3
+\cite{meta2024llama3}) and re-measuring the single- vs.\ multi-agent
+comparison; and a public benchmark building on AIOps Challenge 2020 and
+RCAEval for reproducible comparison against Flow-of-Action
+\cite{pei2025flowofaction} and MA-RCA \cite{fu2026marca}.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented NetOpsAgent, a hierarchical multi-agent LLM framework for
+autonomous cloud network incident management, decomposing investigation into
+four specialized agents coordinated via a shared state object. On two
+independent real fault-injection benchmarks (AIOps Challenge 2020 and
+RCAEval RE1, $N=75$ each), across six configurations, the decomposition did
+not produce a statistically significant improvement over a single-agent
+baseline, including under a configuration designed specifically to test the
+architecture's own context-hygiene hypothesis. We report this as an honest,
+triangulated finding, not a result to explain away: it suggests multi-agent
+LLM decomposition's benefit for infrastructure triage is more
+setup-dependent than prior work (Flow-of-Action \cite{pei2025flowofaction},
+MA-RCA \cite{fu2026marca}) has reported.
+
+We also found, and report in full, that neither verbalized nor
+self-consistency-based LLM confidence discriminates correct from incorrect
+hypotheses on this task, which materially limits the safety guarantee the
+paper's confidence-gated autonomy mechanism can currently provide.
+
+Finally, we tested a targeted extension beyond the base four-agent design: a
+Falsifier agent that adversarially validates the Reasoning agent's hypothesis
+before it reaches the Action agent, mirroring the validation mechanism recent
+multi-agent RCA systems report gains from. Unlike the base architecture, this
+extension produced a real, statistically significant effect --- in both
+directions. It significantly improved accuracy on single-entity incidents
+(AIOps) and significantly degraded it on multi-service incidents (RCAEval),
+and tracing individual cases shows why: without service-dependency-graph
+awareness, the Falsifier mistakes propagated symptoms for root causes once an
+incident spans more than one service. This is the paper's clearest positive
+result, and we report its limits with the same rigor as its gains: verifying
+a hypothesis helps when the space of alternatives is well-scoped, and can
+actively hurt when it is not. A real service-topology fix (Section~V-H)
+removes the RCAEval regression but does not yet turn it into a gain there---
+the honest current state, not rounded up. A control test further shows the
+AIOps gain does not require multi-agent decomposition: a single agent given
+the same Falsifier scores indistinguishably from the full multi-agent
+version ($p=1.0$), consistent with concurrent evidence outside RCA
+\cite{xu2026rethinking,su2026outperform} (Section~\ref{sec:novelty}). This
+paper's central claim is therefore not that multi-agent architecture adds
+value for LLM-based RCA, but that a specific \emph{capability}---adversarial
+verification---does, independent of agent count.
+
+All findings are reported because a verification or autonomy mechanism
+is only useful if its own failure modes are visible. The publicly available
+reference implementation and evaluation harness are designed to make all
+of them, and any future re-measurement, directly reproducible.
+
+\section*{Acknowledgment}
+The author thanks the LangGraph and Google ADK open-source communities, and
+reviewers of early drafts of this work.
+
+\begin{thebibliography}{00}
+
+\bibitem{beyer2016sre} B. Beyer, C. Jones, J. Petoff, and N. R. Murphy, \emph{Site Reliability Engineering: How Google Runs Production Systems}. O'Reilly, 2016.
+\bibitem{yao2023react} S. Yao et al., ``ReAct: Synergizing reasoning and acting in language models,'' in \emph{Proc. ICLR}, 2023.
+\bibitem{schick2023toolformer} T. Schick et al., ``Toolformer: Language models can teach themselves to use tools,'' in \emph{Proc. NeurIPS}, 2023.
+\bibitem{langgraph2024} LangChain Team, ``LangGraph: Building stateful, multi-actor applications with LLMs,'' 2024. [Online]. Available: \url{https://github.com/langchain-ai/langgraph}
+\bibitem{zhao2020aiops} J. Zhao et al., ``AIOps Challenge 2020: KPI anomaly detection,'' 2020. [Online]. Available: \url{https://github.com/NetManAIOps/AIOps-Challenge-2020-Data}
+\bibitem{wei2022cot} J. Wei et al., ``Chain-of-thought prompting elicits reasoning in large language models,'' in \emph{Proc. NeurIPS}, 2022.
+\bibitem{wu2023autogen} Q. Wu et al., ``AutoGen: Enabling next-gen LLM applications via multi-agent conversation,'' arXiv:2308.08155, 2023.
+\bibitem{hong2023metagpt} S. Hong et al., ``MetaGPT: Meta programming for multi-agent collaborative framework,'' arXiv:2308.00352, 2023.
+\bibitem{patil2023gorilla} S. Patil et al., ``Gorilla: Large language model connected with massive APIs,'' arXiv:2305.15334, 2023.
+\bibitem{jimenez2024swebench} C. Jimenez et al., ``SWE-bench: Can language models resolve real-world GitHub issues?'' in \emph{Proc. ICLR}, 2024.
+\bibitem{devlin2019bert} J. Devlin, M. Chang, K. Lee, and K. Toutanova, ``BERT: Pre-training of deep bidirectional transformers for language understanding,'' in \emph{Proc. NAACL}, 2019.
+\bibitem{johnson2021faiss} J. Johnson, M. Douze, and H. J\'egou, ``Billion-scale similarity search with GPUs,'' \emph{IEEE Trans. Big Data}, vol. 7, no. 3, 2021.
+\bibitem{lewis2020rag} P. Lewis et al., ``Retrieval-augmented generation for knowledge-intensive NLP tasks,'' in \emph{Proc. NeurIPS}, 2020.
+\bibitem{lim2018oncall} C. Lim, N. R. Murphy, and B. Beyer, ``On-call and incident response,'' in \emph{The Site Reliability Workbook}. O'Reilly, 2018.
+\bibitem{bjorklund2011netconf} M. Bjorklund, ``NETCONF Configuration Protocol,'' RFC 6241, IETF, 2011.
+\bibitem{rabenstein2015prometheus} B. Rabenstein and J. Volz, ``Prometheus: A next-generation monitoring system,'' in \emph{Proc. USENIX LISA}, 2015.
+\bibitem{liu2023logprompt} H. Liu et al., ``LogPrompt: Prompt engineering towards zero-shot and interpretable log analysis,'' arXiv:2308.07610, 2023.
+\bibitem{winters2020seag} T. Winters, T. Manshreck, and H. Wright, \emph{Software Engineering at Google}. O'Reilly, 2020.
+\bibitem{jimenez2024swebenchverified} C. Jimenez et al., ``SWE-bench verified,'' arXiv:2405.15793, 2024.
+\bibitem{burns2016borg} B. Burns, B. Grant, D. Oppenheimer, E. Brewer, and J. Wilkes, ``Borg, Omega, and Kubernetes,'' \emph{ACM Queue}, vol. 14, 2016.
+\bibitem{mcnemar1947test} Q. McNemar, ``Note on the sampling error of the difference between correlated proportions or percentages,'' \emph{Psychometrika}, vol. 12, no. 2, 1947.
+\bibitem{cohen1960kappa} J. Cohen, ``A coefficient of agreement for nominal scales,'' \emph{Educ. Psychol. Meas.}, vol. 20, no. 1, 1960.
+\bibitem{guo2023chatgptevent} Y. Guo et al., ``Exploring the feasibility of ChatGPT for event extraction,'' arXiv:2303.03836, 2023.
+\bibitem{chen2024eurosys} X. Chen et al., ``Automatic root cause analysis via large language models for cloud incidents,'' in \emph{Proc. EuroSys}, 2024.
+\bibitem{luo2022issre} W. Luo et al., ``An unnamed knowledge graph approach to root-cause analysis for microservice systems,'' in \emph{Proc. ISSRE}, 2022.
+\bibitem{roy2024llmrca} D. Roy et al., ``Exploring LLM-based agents for root cause analysis,'' arXiv:2403.04123, 2024.
+\bibitem{openai2023gpt4} OpenAI, ``GPT-4 technical report,'' arXiv:2303.08774, 2023.
+\bibitem{meta2024llama3} Meta AI, ``Llama 3 model card,'' 2024. [Online]. Available: \url{https://ai.meta.com/blog/meta-llama-3/}
+\bibitem{elastic2024elasticsearch} Elastic, ``Elasticsearch: The official distributed search and analytics engine,'' 2024. [Online]. Available: \url{https://www.elastic.co}
+\bibitem{murphy2016embracingrisk} N. R. Murphy et al., ``Embracing risk,'' in \emph{Site Reliability Engineering}. O'Reilly, 2016, ch. 3.
+\bibitem{basiri2016chaos} A. Basiri et al., ``Chaos engineering,'' \emph{IEEE Software}, vol. 33, no. 3, pp. 35--41, 2016.
+\bibitem{opentelemetry2024} OpenTelemetry Authors, ``OpenTelemetry specification,'' 2024. [Online]. Available: \url{https://opentelemetry.io/docs/specs/}
+\bibitem{guo2017calibration} C. Guo, G. Pleiss, Y. Sun, and K. Q. Weinberger, ``On calibration of modern neural networks,'' in \emph{Proc. ICML}, 2017.
+\bibitem{pei2025flowofaction} C. Pei, Z. Wang, F. Liu, Z. Li, Y. Liu, X. He, R. Kang, T. Zhang, J. Chen, J. Li, G. Xie, and D. Pei, ``Flow-of-Action: SOP enhanced LLM-based multi-agent system for root cause analysis,'' in \emph{Companion Proc. ACM Web Conference (WWW Companion '25)}, Sydney, Australia, 2025.
+\bibitem{fu2026marca} F. Fu, H. Ding, Y. Qin, J. Yu, and D. Xu, ``Leveraging multi-agent framework for root cause analysis,'' \emph{Complex \& Intelligent Systems}, vol. 12, no. 1, art. 4, 2026.
+\bibitem{xu2026rethinking} J. Xu et al., ``Rethinking the value of multi-agent workflow: a strong single agent baseline,'' arXiv:2601.12307, 2026.
+\bibitem{su2026outperform} J. Su and C. Wu, ``When do multi-agent systems outperform? Analysing the learning efficiency of agentic systems,'' arXiv:2602.08272, 2026.
+
+\end{thebibliography}
+
+\end{document}

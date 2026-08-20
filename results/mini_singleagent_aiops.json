@@ -1,0 +1,527 @@
+[
+  {
+    "index": "2",
+    "ground_truth": "network delay",
+    "hyp": "increased call latency due to resource contention",
+    "confidence": 0.8,
+    "score": "exact"
+  },
+  {
+    "index": "3",
+    "ground_truth": "network delay",
+    "hyp": "increased_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "4",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "5",
+    "ground_truth": "db connection limit",
+    "hyp": "Unexpected high process usage",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "6",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "7",
+    "ground_truth": "network delay",
+    "hyp": "increased call latency",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "8",
+    "ground_truth": "network loss",
+    "hyp": "CPU resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "9",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "10",
+    "ground_truth": "network loss",
+    "hyp": "high_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "11",
+    "ground_truth": "db  close",
+    "hyp": "tnsping latency issue",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "101",
+    "ground_truth": "CPU fault",
+    "hyp": "increased_cpu_usage",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "102",
+    "ground_truth": "network delay",
+    "hyp": "increased_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "103",
+    "ground_truth": "network delay",
+    "hyp": "High Sent Queue",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "104",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "105",
+    "ground_truth": "network delay",
+    "hyp": "normal_operation",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "106",
+    "ground_truth": "network delay",
+    "hyp": "normal_variation",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "108",
+    "ground_truth": "db connection limit",
+    "hyp": "High session and write activity leading to resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "109",
+    "ground_truth": "network loss",
+    "hyp": "Disk I/O Bottleneck",
+    "confidence": 0.95,
+    "score": "incorrect"
+  },
+  {
+    "index": "110",
+    "ground_truth": "network loss",
+    "hyp": "Increased processor load",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "111",
+    "ground_truth": "network delay",
+    "hyp": "CPU resource contention or misconfiguration",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "112",
+    "ground_truth": "network delay",
+    "hyp": "Disk I/O Bottleneck",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "113",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "114",
+    "ground_truth": "network delay",
+    "hyp": "no significant resource issues",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "115",
+    "ground_truth": "network loss",
+    "hyp": "CPU spike due to increased load",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "117",
+    "ground_truth": "db  close",
+    "hyp": "High SctRead_Per_Sec indicating potential read contention or increased read activity",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "118",
+    "ground_truth": "network loss",
+    "hyp": "temporary spike in CPU usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "119",
+    "ground_truth": "CPU fault",
+    "hyp": "increased call latency due to resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "120",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "121",
+    "ground_truth": "network delay",
+    "hyp": "high_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "122",
+    "ground_truth": "network delay",
+    "hyp": "Disk I/O Saturation",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "123",
+    "ground_truth": "network loss",
+    "hyp": "High page faults leading to increased I/O wait",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "124",
+    "ground_truth": "db  close",
+    "hyp": "Increased Write Operations and Session Activity",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "125",
+    "ground_truth": "network loss",
+    "hyp": "CPU Resource Exhaustion",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "126",
+    "ground_truth": "db connection limit",
+    "hyp": "Decreased SctRead_Per_Sec",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "127",
+    "ground_truth": "CPU fault",
+    "hyp": "increased call latency due to resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "128",
+    "ground_truth": "network delay",
+    "hyp": "Queue Saturation",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "129",
+    "ground_truth": "network loss",
+    "hyp": "High Sent Queue",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "130",
+    "ground_truth": "network delay",
+    "hyp": "High Sent Queue",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "131",
+    "ground_truth": "network delay",
+    "hyp": "High Disk I/O and Queue Length",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "132",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "133",
+    "ground_truth": "network delay",
+    "hyp": "High page faults leading to increased disk I/O",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "134",
+    "ground_truth": "network delay",
+    "hyp": "High Page Faults",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "135",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU spike due to increased load",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "136",
+    "ground_truth": "db connection limit",
+    "hyp": "High Logic Reads",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "137",
+    "ground_truth": "db  close",
+    "hyp": "Increased Logical Reads and Physical Reads",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "138",
+    "ground_truth": "db connection limit",
+    "hyp": "High Redo Log Generation",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "139",
+    "ground_truth": "network delay",
+    "hyp": "call_latency_spike",
+    "confidence": 0.8,
+    "score": "exact"
+  },
+  {
+    "index": "140",
+    "ground_truth": "network loss",
+    "hyp": "CPU resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "141",
+    "ground_truth": "CPU fault",
+    "hyp": "increased call latency due to resource contention",
+    "confidence": 0.8,
+    "score": "incorrect"
+  },
+  {
+    "index": "142",
+    "ground_truth": "network delay",
+    "hyp": "High Sent Queue",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "143",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "144",
+    "ground_truth": "network delay",
+    "hyp": "high_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "145",
+    "ground_truth": "network delay",
+    "hyp": "no significant resource issues",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "146",
+    "ground_truth": "network loss",
+    "hyp": "High Disk Wait Times and Increased Sent Queue",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "147",
+    "ground_truth": "network loss",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "148",
+    "ground_truth": "db connection limit",
+    "hyp": "High Logic Reads",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "149",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "150",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource contention",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "151",
+    "ground_truth": "network delay",
+    "hyp": "CPU resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "153",
+    "ground_truth": "network loss",
+    "hyp": "increased_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "154",
+    "ground_truth": "network loss",
+    "hyp": "increased_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "155",
+    "ground_truth": "network delay",
+    "hyp": "High Sent_queue",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "156",
+    "ground_truth": "network delay",
+    "hyp": "High Page Faults",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "157",
+    "ground_truth": "CPU fault",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "158",
+    "ground_truth": "network loss",
+    "hyp": "Disk I/O Bottleneck",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "159",
+    "ground_truth": "network delay",
+    "hyp": "high_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "161",
+    "ground_truth": "network delay",
+    "hyp": "increased_cpu_usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "162",
+    "ground_truth": "network loss",
+    "hyp": "CPU resource exhaustion",
+    "confidence": 0.9,
+    "score": "incorrect"
+  },
+  {
+    "index": "163",
+    "ground_truth": "network delay",
+    "hyp": "CPU resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "164",
+    "ground_truth": "network delay",
+    "hyp": "Disk I/O Bottleneck",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "165",
+    "ground_truth": "network delay",
+    "hyp": "Increased Sent_queue leading to potential network congestion",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "166",
+    "ground_truth": "db connection limit",
+    "hyp": "Increased Process User Usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "167",
+    "ground_truth": "CPU fault",
+    "hyp": "increased_cpu_usage",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "168",
+    "ground_truth": "network delay",
+    "hyp": "anomalous CPU usage",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "169",
+    "ground_truth": "network loss",
+    "hyp": "CPU resource contention",
+    "confidence": 0.85,
+    "score": "incorrect"
+  }
+]

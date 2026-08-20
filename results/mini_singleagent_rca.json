@@ -1,0 +1,677 @@
+[
+  {
+    "index": "RE1-TT/ts-train-service_mem/1",
+    "ground_truth_service": "ts-train-service",
+    "ground_truth_fault": "memory fault",
+    "service": "ts-train-service",
+    "fault": "CPU fault",
+    "confidence": 0.95,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-auth-service_mem/1",
+    "ground_truth_service": "ts-auth-service",
+    "ground_truth_fault": "memory fault",
+    "service": "ts-auth-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-train-service_delay/1",
+    "ground_truth_service": "ts-train-service",
+    "ground_truth_fault": "network delay",
+    "service": "ts-admin-basic-info-service",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "RE1-TT/ts-travel-service_loss/1",
+    "ground_truth_service": "ts-travel-service",
+    "ground_truth_fault": "network loss",
+    "service": "ts-travel-service",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-travel-service_cpu/1",
+    "ground_truth_service": "ts-travel-service",
+    "ground_truth_fault": "CPU fault",
+    "service": "ts-travel-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-TT/ts-route-service_mem/1",
+    "ground_truth_service": "ts-route-service",
+    "ground_truth_fault": "memory fault",
+    "service": "ts-route-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-auth-service_disk/1",
+    "ground_truth_service": "ts-auth-service",
+    "ground_truth_fault": "disk fault",
+    "service": "ts-auth-service",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-order-service_disk/1",
+    "ground_truth_service": "ts-order-service",
+    "ground_truth_fault": "disk fault",
+    "service": "ts-order-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-travel-service_delay/1",
+    "ground_truth_service": "ts-travel-service",
+    "ground_truth_fault": "network delay",
+    "service": "ts-admin-travel-service",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-train-service_disk/1",
+    "ground_truth_service": "ts-train-service",
+    "ground_truth_fault": "disk fault",
+    "service": "ts-train-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-order-service_cpu/1",
+    "ground_truth_service": "ts-order-service",
+    "ground_truth_fault": "CPU fault",
+    "service": "ts-order-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-TT/ts-auth-service_delay/1",
+    "ground_truth_service": "ts-auth-service",
+    "ground_truth_fault": "network delay",
+    "service": "ts-auth-service",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-TT/ts-route-service_loss/1",
+    "ground_truth_service": "ts-route-service",
+    "ground_truth_fault": "network loss",
+    "service": "ts-route-service",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-route-service_cpu/1",
+    "ground_truth_service": "ts-route-service",
+    "ground_truth_fault": "CPU fault",
+    "service": "ts-route-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-TT/ts-travel-service_disk/1",
+    "ground_truth_service": "ts-travel-service",
+    "ground_truth_fault": "disk fault",
+    "service": "ts-travel-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-order-service_mem/1",
+    "ground_truth_service": "ts-order-service",
+    "ground_truth_fault": "memory fault",
+    "service": "ts-order-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-train-service_cpu/1",
+    "ground_truth_service": "ts-train-service",
+    "ground_truth_fault": "CPU fault",
+    "service": "ts-train-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-TT/ts-auth-service_cpu/1",
+    "ground_truth_service": "ts-auth-service",
+    "ground_truth_fault": "CPU fault",
+    "service": "ts-auth-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-TT/ts-auth-service_loss/1",
+    "ground_truth_service": "ts-auth-service",
+    "ground_truth_fault": "network loss",
+    "service": "ts-auth-service",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-order-service_loss/1",
+    "ground_truth_service": "ts-order-service",
+    "ground_truth_fault": "network loss",
+    "service": "ts-inside-payment-service",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "RE1-TT/ts-route-service_delay/1",
+    "ground_truth_service": "ts-route-service",
+    "ground_truth_fault": "network delay",
+    "service": "ts-route-service",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-TT/ts-train-service_loss/1",
+    "ground_truth_service": "ts-train-service",
+    "ground_truth_fault": "network loss",
+    "service": "ts-train-service",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-order-service_delay/1",
+    "ground_truth_service": "ts-order-service",
+    "ground_truth_fault": "network delay",
+    "service": "ts-inside-payment-service",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "RE1-TT/ts-route-service_disk/1",
+    "ground_truth_service": "ts-route-service",
+    "ground_truth_fault": "disk fault",
+    "service": "ts-route-service",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-TT/ts-travel-service_mem/1",
+    "ground_truth_service": "ts-travel-service",
+    "ground_truth_fault": "memory fault",
+    "service": "ts-travel-service",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/payment_mem/1",
+    "ground_truth_service": "payment",
+    "ground_truth_fault": "memory fault",
+    "service": "payment",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/orders_disk/1",
+    "ground_truth_service": "orders",
+    "ground_truth_fault": "disk fault",
+    "service": "orders",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/user_mem/1",
+    "ground_truth_service": "user",
+    "ground_truth_fault": "memory fault",
+    "service": "user",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/catalogue_delay/1",
+    "ground_truth_service": "catalogue",
+    "ground_truth_fault": "network delay",
+    "service": "catalogue",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/carts_loss/1",
+    "ground_truth_service": "carts",
+    "ground_truth_fault": "network loss",
+    "service": "carts",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/user_loss/1",
+    "ground_truth_service": "user",
+    "ground_truth_fault": "network loss",
+    "service": "user",
+    "fault": "CPU fault",
+    "confidence": 0.8,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/orders_cpu/1",
+    "ground_truth_service": "orders",
+    "ground_truth_fault": "CPU fault",
+    "service": "orders",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-SS/catalogue_loss/1",
+    "ground_truth_service": "catalogue",
+    "ground_truth_fault": "network loss",
+    "service": "carts-db",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "RE1-SS/catalogue_cpu/1",
+    "ground_truth_service": "catalogue",
+    "ground_truth_fault": "CPU fault",
+    "service": "catalogue",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-SS/carts_mem/1",
+    "ground_truth_service": "carts",
+    "ground_truth_fault": "memory fault",
+    "service": "carts",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/payment_loss/1",
+    "ground_truth_service": "payment",
+    "ground_truth_fault": "network loss",
+    "service": "carts-db",
+    "fault": "CPU fault",
+    "confidence": 0.8,
+    "score": "incorrect"
+  },
+  {
+    "index": "RE1-SS/payment_delay/1",
+    "ground_truth_service": "payment",
+    "ground_truth_fault": "network delay",
+    "service": "payment",
+    "fault": "CPU fault",
+    "confidence": 0.8,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/carts_delay/1",
+    "ground_truth_service": "carts",
+    "ground_truth_fault": "network delay",
+    "service": "carts",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/orders_mem/1",
+    "ground_truth_service": "orders",
+    "ground_truth_fault": "memory fault",
+    "service": "orders",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/catalogue_mem/1",
+    "ground_truth_service": "catalogue",
+    "ground_truth_fault": "memory fault",
+    "service": "catalogue",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/orders_loss/1",
+    "ground_truth_service": "orders",
+    "ground_truth_fault": "network loss",
+    "service": "orders",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/carts_cpu/1",
+    "ground_truth_service": "carts",
+    "ground_truth_fault": "CPU fault",
+    "service": "carts",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-SS/orders_delay/1",
+    "ground_truth_service": "orders",
+    "ground_truth_fault": "network delay",
+    "service": "orders",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/carts_disk/1",
+    "ground_truth_service": "carts",
+    "ground_truth_fault": "disk fault",
+    "service": "carts",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/user_delay/1",
+    "ground_truth_service": "user",
+    "ground_truth_fault": "network delay",
+    "service": "user",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/user_disk/1",
+    "ground_truth_service": "user",
+    "ground_truth_fault": "disk fault",
+    "service": "user",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/payment_cpu/1",
+    "ground_truth_service": "payment",
+    "ground_truth_fault": "CPU fault",
+    "service": "payment",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-SS/catalogue_disk/1",
+    "ground_truth_service": "catalogue",
+    "ground_truth_fault": "disk fault",
+    "service": "catalogue",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-SS/user_cpu/1",
+    "ground_truth_service": "user",
+    "ground_truth_fault": "CPU fault",
+    "service": "user",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-SS/payment_disk/1",
+    "ground_truth_service": "payment",
+    "ground_truth_fault": "disk fault",
+    "service": "payment",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/productcatalogservice_cpu/1",
+    "ground_truth_service": "productcatalogservice",
+    "ground_truth_fault": "CPU fault",
+    "service": "productcatalogservice",
+    "fault": "CPU fault",
+    "confidence": 0.95,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/adservice_loss/1",
+    "ground_truth_service": "adservice",
+    "ground_truth_fault": "network loss",
+    "service": "checkoutservice",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "incorrect"
+  },
+  {
+    "index": "RE1-OB/currencyservice_cpu/1",
+    "ground_truth_service": "currencyservice",
+    "ground_truth_fault": "CPU fault",
+    "service": "currencyservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/adservice_mem/1",
+    "ground_truth_service": "adservice",
+    "ground_truth_fault": "memory fault",
+    "service": "adservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/currencyservice_loss/1",
+    "ground_truth_service": "currencyservice",
+    "ground_truth_fault": "network loss",
+    "service": "frontend",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/checkoutservice_mem/1",
+    "ground_truth_service": "checkoutservice",
+    "ground_truth_fault": "memory fault",
+    "service": "checkoutservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/productcatalogservice_loss/1",
+    "ground_truth_service": "productcatalogservice",
+    "ground_truth_fault": "network loss",
+    "service": "recommendationservice",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/checkoutservice_disk/1",
+    "ground_truth_service": "checkoutservice",
+    "ground_truth_fault": "disk fault",
+    "service": "checkoutservice",
+    "fault": "CPU fault",
+    "confidence": 0.95,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/cartservice_loss/1",
+    "ground_truth_service": "cartservice",
+    "ground_truth_fault": "network loss",
+    "service": "checkoutservice",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/cartservice_delay/1",
+    "ground_truth_service": "cartservice",
+    "ground_truth_fault": "network delay",
+    "service": "cartservice",
+    "fault": "network delay",
+    "confidence": 0.9,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/cartservice_cpu/1",
+    "ground_truth_service": "cartservice",
+    "ground_truth_fault": "CPU fault",
+    "service": "cartservice",
+    "fault": "CPU fault",
+    "confidence": 0.95,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/checkoutservice_delay/1",
+    "ground_truth_service": "checkoutservice",
+    "ground_truth_fault": "network delay",
+    "service": "checkoutservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/currencyservice_delay/1",
+    "ground_truth_service": "currencyservice",
+    "ground_truth_fault": "network delay",
+    "service": "currencyservice",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/adservice_disk/1",
+    "ground_truth_service": "adservice",
+    "ground_truth_fault": "disk fault",
+    "service": "adservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/adservice_delay/1",
+    "ground_truth_service": "adservice",
+    "ground_truth_fault": "network delay",
+    "service": "adservice",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/checkoutservice_cpu/1",
+    "ground_truth_service": "checkoutservice",
+    "ground_truth_fault": "CPU fault",
+    "service": "checkoutservice",
+    "fault": "CPU fault",
+    "confidence": 0.95,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/currencyservice_disk/1",
+    "ground_truth_service": "currencyservice",
+    "ground_truth_fault": "disk fault",
+    "service": "currencyservice",
+    "fault": "network delay",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/cartservice_mem/1",
+    "ground_truth_service": "cartservice",
+    "ground_truth_fault": "memory fault",
+    "service": "cartservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/productcatalogservice_mem/1",
+    "ground_truth_service": "productcatalogservice",
+    "ground_truth_fault": "memory fault",
+    "service": "productcatalogservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/productcatalogservice_delay/1",
+    "ground_truth_service": "productcatalogservice",
+    "ground_truth_fault": "network delay",
+    "service": "productcatalogservice",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/currencyservice_mem/1",
+    "ground_truth_service": "currencyservice",
+    "ground_truth_fault": "memory fault",
+    "service": "currencyservice",
+    "fault": "CPU fault",
+    "confidence": 0.95,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/productcatalogservice_disk/1",
+    "ground_truth_service": "productcatalogservice",
+    "ground_truth_fault": "disk fault",
+    "service": "productcatalogservice",
+    "fault": "CPU fault",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/adservice_cpu/1",
+    "ground_truth_service": "adservice",
+    "ground_truth_fault": "CPU fault",
+    "service": "adservice",
+    "fault": "CPU fault",
+    "confidence": 0.95,
+    "score": "exact"
+  },
+  {
+    "index": "RE1-OB/checkoutservice_loss/1",
+    "ground_truth_service": "checkoutservice",
+    "ground_truth_fault": "network loss",
+    "service": "paymentservice",
+    "fault": "network delay",
+    "confidence": 0.85,
+    "score": "partial"
+  },
+  {
+    "index": "RE1-OB/cartservice_disk/1",
+    "ground_truth_service": "cartservice",
+    "ground_truth_fault": "disk fault",
+    "service": "cartservice",
+    "fault": "CPU fault",
+    "confidence": 0.9,
+    "score": "partial"
+  }
+]

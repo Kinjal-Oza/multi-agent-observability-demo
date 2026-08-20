@@ -1,0 +1,632 @@
+[
+  {
+    "index": "2",
+    "ground_truth": "network delay",
+    "samples": [
+      "Spike in call latency",
+      "sporadic_high_latency",
+      "CPU spike due to transient workload",
+      "sporadic_high_latency",
+      "external_dependency_latency_spike"
+    ],
+    "buckets": [
+      "network delay",
+      "network delay",
+      "CPU fault",
+      "network delay",
+      "network delay"
+    ],
+    "final_hyp": "Spike in call latency",
+    "sc_confidence": 0.8,
+    "score": "exact"
+  },
+  {
+    "index": "3",
+    "ground_truth": "network delay",
+    "samples": [
+      "CPU_Overutilization",
+      "CPU_Overutilization",
+      "CPU_Overutilization",
+      "CPU_spike",
+      "CPU_spike"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_Overutilization",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "4",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "CPU_Overutilization",
+      "CPU Saturation",
+      "CPU saturation",
+      "CPU resource exhaustion",
+      "CPU_saturation"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_Overutilization",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "5",
+    "ground_truth": "db connection limit",
+    "samples": [
+      "High_Process_Usage",
+      "Excessive_Proc_User_Usage",
+      "High_Proc_User_Usage",
+      "High CPU Usage by User Processes",
+      "High_Process_Usage"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "CPU fault",
+      "other"
+    ],
+    "final_hyp": "High_Process_Usage",
+    "sc_confidence": 0.8,
+    "score": "incorrect"
+  },
+  {
+    "index": "6",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "CPU saturation",
+      "CPU Saturation",
+      "CPU saturation",
+      "CPU_saturation_due_to_spike",
+      "CPU Saturation"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU saturation",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "7",
+    "ground_truth": "network delay",
+    "samples": [
+      "increased_call_latency",
+      "Increased call latency variance",
+      "call_latency_spike",
+      "high_call_latency_spike",
+      "high_call_latency"
+    ],
+    "buckets": [
+      "network delay",
+      "network delay",
+      "network delay",
+      "network delay",
+      "network delay"
+    ],
+    "final_hyp": "increased_call_latency",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "8",
+    "ground_truth": "network loss",
+    "samples": [
+      "CPU Throttling or Underutilization",
+      "CPU_throttling_or_limited_resources",
+      "Reduced CPU Utilization",
+      "CPU_throttling",
+      "CPU Throttling or Limited Resources"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU Throttling or Underutilization",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "9",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "CPU_overutilization",
+      "CPU_overutilization",
+      "CPU_overutilization",
+      "CPU resource exhaustion",
+      "CPU saturation"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_overutilization",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "10",
+    "ground_truth": "network loss",
+    "samples": [
+      "CPU_contention",
+      "Increased CPU usage",
+      "elevated_cpu_usage",
+      "CPU_spike",
+      "Increased CPU Usage"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_contention",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "11",
+    "ground_truth": "db  close",
+    "samples": [
+      "Network Latency",
+      "Network Latency",
+      "Network Latency",
+      "Network_Latency",
+      "Network Latency/Connectivity Issue"
+    ],
+    "buckets": [
+      "network delay",
+      "network delay",
+      "network delay",
+      "network delay",
+      "network delay"
+    ],
+    "final_hyp": "Network Latency",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "101",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "CPU_Overload",
+      "CPU_overutilization",
+      "CPU_saturation",
+      "CPU_Usage_Spike",
+      "CPU_overutilization"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_Overload",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "102",
+    "ground_truth": "network delay",
+    "samples": [
+      "increased_cpu_usage",
+      "CPU_spike",
+      "increased_cpu_usage",
+      "Increased CPU usage",
+      "increased_cpu_usage"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "increased_cpu_usage",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "103",
+    "ground_truth": "network delay",
+    "samples": [
+      "Network_congestion",
+      "Network_Queue_Overflow",
+      "High_sent_queue",
+      "High_sent_queue",
+      "Network Congestion"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "Network_congestion",
+    "sc_confidence": 1.0,
+    "score": "partial"
+  },
+  {
+    "index": "104",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "CPU_Usage_Spike",
+      "CPU_spike_due_to_high_call_latency",
+      "CPU_spike_due_to_high_load",
+      "CPU_spike_due_to_workload_change",
+      "CPU_saturation"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_Usage_Spike",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "105",
+    "ground_truth": "network delay",
+    "samples": [
+      "Transient spike in CPU usage",
+      "No significant anomaly detected",
+      "No significant deviation detected",
+      "No significant deviation detected",
+      "transient anomaly, no clear cause"
+    ],
+    "buckets": [
+      "CPU fault",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "No significant anomaly detected",
+    "sc_confidence": 0.8,
+    "score": "incorrect"
+  },
+  {
+    "index": "106",
+    "ground_truth": "network delay",
+    "samples": [
+      "container_memory_saturation",
+      "High memory usage",
+      "elevated_memory_usage",
+      "normal_variation",
+      "High memory usage"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "container_memory_saturation",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "108",
+    "ground_truth": "db connection limit",
+    "samples": [
+      "High Session Load",
+      "High Session and Write Load",
+      "High Session and Write Load",
+      "High Load and Session Overload",
+      "High Session Activity and Parallel Writes"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "High Session Load",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "109",
+    "ground_truth": "network loss",
+    "samples": [
+      "Disk I/O Latency",
+      "Disk I/O bottleneck",
+      "Disk IO Bottleneck",
+      "Disk I/O Latency",
+      "Disk I/O bottleneck"
+    ],
+    "buckets": [
+      "network delay",
+      "other",
+      "other",
+      "network delay",
+      "other"
+    ],
+    "final_hyp": "Disk I/O bottleneck",
+    "sc_confidence": 0.6,
+    "score": "incorrect"
+  },
+  {
+    "index": "110",
+    "ground_truth": "network loss",
+    "samples": [
+      "Processor_load_spike",
+      "Processor_load_spike",
+      "Processor_load_spike",
+      "Processor_load_spike",
+      "Processor_load_spike"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "Processor_load_spike",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "111",
+    "ground_truth": "network delay",
+    "samples": [
+      "reduced_cpu_usage",
+      "CPU_usage_artifact",
+      "Reduced CPU utilization",
+      "reduced_cpu_usage",
+      "CPU_throttling"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "reduced_cpu_usage",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "112",
+    "ground_truth": "network delay",
+    "samples": [
+      "Disk I/O Bottleneck",
+      "Disk_IO_Contension",
+      "Disk I/O Saturation",
+      "Disk_IO_Contention",
+      "Disk_latency_issue"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "network delay"
+    ],
+    "final_hyp": "Disk I/O Bottleneck",
+    "sc_confidence": 0.8,
+    "score": "incorrect"
+  },
+  {
+    "index": "113",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "High_CPU_Usage",
+      "CPU_Overutilization",
+      "CPU_Overutilization",
+      "CPU_Overutilization",
+      "CPU_overutilization"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "High_CPU_Usage",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "114",
+    "ground_truth": "network delay",
+    "samples": [
+      "no_anomalies_detected",
+      "no_significant_anomalies_detected",
+      "No significant deviation detected",
+      "normal_variation",
+      "No significant anomalies detected"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "no_anomalies_detected",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "115",
+    "ground_truth": "network loss",
+    "samples": [
+      "CPU_spike",
+      "cpu_spike",
+      "CPU_spike",
+      "sporadic CPU spikes",
+      "CPU_spike"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_spike",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "117",
+    "ground_truth": "db  close",
+    "samples": [
+      "Increased SctRead and DFParaWrite rates",
+      "Increased Short-Reads and Parallel Writes",
+      "Increased Scatter Read Activity",
+      "Increased Scatter Reads",
+      "Increased Short Reads"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "Increased SctRead and DFParaWrite rates",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "118",
+    "ground_truth": "network loss",
+    "samples": [
+      "sudden_spike_in_call_latency",
+      "CPU_throttling_or_idling",
+      "Application-level issue causing sporadic high latency",
+      "CPU_underutilization",
+      "transient_spike_in_cpu_usage"
+    ],
+    "buckets": [
+      "network delay",
+      "CPU fault",
+      "network delay",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_throttling_or_idling",
+    "sc_confidence": 0.6,
+    "score": "incorrect"
+  },
+  {
+    "index": "119",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "network_latency_issue",
+      "high_call_latency_spike",
+      "high_call_latency",
+      "high_call_latency_spike",
+      "call_latency_spike"
+    ],
+    "buckets": [
+      "network delay",
+      "network delay",
+      "network delay",
+      "network delay",
+      "network delay"
+    ],
+    "final_hyp": "network_latency_issue",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "120",
+    "ground_truth": "CPU fault",
+    "samples": [
+      "CPU_Overutilization",
+      "CPU_contention",
+      "CPU_saturation",
+      "CPU_Overutilization",
+      "High CPU Usage"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_Overutilization",
+    "sc_confidence": 1.0,
+    "score": "exact"
+  },
+  {
+    "index": "121",
+    "ground_truth": "network delay",
+    "samples": [
+      "CPU_spike",
+      "CPU_spike",
+      "CPU_spike",
+      "CPU_spike",
+      "CPU_spike"
+    ],
+    "buckets": [
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault",
+      "CPU fault"
+    ],
+    "final_hyp": "CPU_spike",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  },
+  {
+    "index": "122",
+    "ground_truth": "network delay",
+    "samples": [
+      "High_page_faults_and_disk_reads",
+      "disk_io_bottleneck",
+      "High_Page_Paging",
+      "High_Page_in_and_Disk_Read_Activity",
+      "disk_read_activity"
+    ],
+    "buckets": [
+      "other",
+      "other",
+      "other",
+      "other",
+      "other"
+    ],
+    "final_hyp": "High_page_faults_and_disk_reads",
+    "sc_confidence": 1.0,
+    "score": "incorrect"
+  }
+]
