@@ -12,10 +12,6 @@ reported as-is.
 - `scripts/` — every extraction and evaluation script, in the order they were run.
 - `data/` — extracted incident/scenario JSON (inputs to the eval scripts).
 - `results/` — raw per-incident model outputs (inputs to any stats you want to recompute).
-- `docs/CNSM_rebuttal_letter.md` — final point-by-point response to all four reviewers,
-  as submitted (character-limited version).
-- `docs/related_work_differentiation.md`, `docs/paper_section_replacements.md` —
-  superseded drafting aids, kept for provenance only; see the paper for final text.
 
 ## Datasets
 
@@ -73,8 +69,7 @@ verification *capability*, not multi-agent decomposition (control test above, p=
 This is consistent with concurrent 2026 literature cited in the paper (Section II-G):
 homogeneous multi-agent workflows are matched by a well-tuned single agent, and
 decomposition's advantage shrinks for interdependent tasks like whole-incident RCA.
-This is the real, current state of the evidence. See `docs/CNSM_rebuttal_letter.md` for
-how this is communicated to reviewers.
+This is the real, current state of the evidence.
 
 ## Falsifier extension (Section V-H of the paper)
 
