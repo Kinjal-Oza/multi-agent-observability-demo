@@ -60,11 +60,11 @@ there. A control test shows the AIOps gain comes from the Falsifier
 capability itself, not the decomposition it was attached to: the same
 Falsifier on a single-agent hypothesis scores statistically
 indistinguishably from the multi-agent version ($p=1.0$ head-to-head). We
-report this in full, characterize why self-reported LLM confidence fails to
-support safe autonomous action here, and identify the likely mechanism
-(blind metric selection under decomposition) behind the base architecture's
-underperformance. A reference implementation is publicly available under
-the MIT license.
+report this in full, characterize why self-reported LLM confidence fails
+to support safe autonomous action here, and identify the likely mechanism
+(blind metric selection under decomposition) behind the base
+architecture's underperformance. A reference implementation is publicly
+available under the MIT license.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -557,13 +557,15 @@ Rule-based\footnotemark[2] & \multicolumn{2}{c}{76.0\%} & 36.0\% & --- \\
 
 \textbf{No configuration shows a statistically significant multi-agent
 advantage on either dataset.} A rule-based baseline is competitive with, or
-beats, both LLM architectures on AIOps. Two reviewer-requested ablations
-produced small, real, secondary effects: RAG relevance gating reduced a
-CPU/disk over-retrieval bias (67/75$\to$59/75 guesses mentioning CPU or
-disk regardless of true cause), modestly improving AIOps accuracy;
-GPT-4o-mini, in the single-agent role, matched GPT-4o on AIOps (22.7\%
-both) but trailed on RCAEval (26.7\% vs.\ 33.3\%) at roughly
-one-seventeenth the cost.
+beats, both LLM architectures on AIOps, where the rule-based classifier's
+76.0\% is roughly 3x every LLM configuration's accuracy---a practical
+answer for a deploying team: nothing here argues for replacing a working
+heuristic with an LLM pipeline on this task today. Two reviewer-requested ablations produced small, real,
+secondary effects: RAG relevance gating reduced a CPU/disk over-retrieval
+bias (67/75$\to$59/75 guesses mentioning CPU or disk regardless of true
+cause), modestly improving AIOps accuracy; GPT-4o-mini, in the
+single-agent role, matched GPT-4o on AIOps (22.7\% both) but trailed on
+RCAEval (26.7\% vs.\ 33.3\%) (cost detail in Section~\ref{sec:impl}).
 
 \subsection{Confidence Calibration}
 \label{sec:confidence}
@@ -653,15 +655,18 @@ under both, 47 wrong under both, 4 vs.\ 3 on the rest)---statistically
 indistinguishable. The Falsifier drives the AIOps gain, not the
 decomposition it was attached to; crossing $p<0.05$ in one condition
 reflects how close the estimates are, not a real architectural
-difference.
+difference. The same single-run caveat applies here: the 8-point sampling
+swing in Section~\ref{sec:discussion}.B means this significance reflects
+within-run pairing, not run-to-run reproducibility.
 
 This is mechanistically explained: validation helps when the alternative
 space is one entity's own metrics, and hurts when it spans a call graph
 without topology awareness. We tested the fix directly: give the Falsifier
 each system's real service dependency graph (verified for Online Boutique
-and Sock Shop; a naming-convention proxy for Train Ticket's 64 services),
-instructing it that graph-connected co-anomalies are expected propagation,
-not independent evidence. This eliminates the regression
+and Sock Shop; a naming-convention proxy for Train Ticket's 64
+services---so confirmed for two of three systems, Train Ticket's
+contribution resting on an unverified proxy), instructing it that graph-connected
+co-anomalies are expected propagation, not independent evidence. This eliminates the regression
 (24.0\%$\to$40.0\%, indistinguishable from single-agent's 42.7\%,
 $p=0.50$ vs.\ $p<0.001$ before) but adds no gain: the topology-aware
 Falsifier made zero overrides across all 75 incidents, trading
@@ -702,9 +707,7 @@ shows no threshold in the practical range currently discriminates safely.
 All configurations ran once: re-running an \emph{unchanged} prompt moved
 its own score by 8 points from sampling noise alone (RCAEval single-agent,
 41.3\%$\to$33.3\%), larger than most reported effects; a repeated-run
-protocol was not performed, so point estimates are indicative, and
-non-significant McNemar results are consistent with, not contradicted by,
-this noise. On validity: the single-agent baseline uses the same tool
+protocol was not performed, so point estimates are indicative. On validity: the single-agent baseline uses the same tool
 schema and prompt length, but both prompts were written by the same
 author, a potential bias either way (\emph{internal}); results come from
 two public benchmarks, so generalization elsewhere is plausible but
@@ -731,9 +734,9 @@ active maintenance, since recency decay ($\lambda=0.95$/month) only
 partially offsets staleness.
 
 \subsection{Future Work}
-Motivated by Section~\ref{sec:falsifier}: sharpen the topology-aware
-Falsifier's override decision, and verify Train Ticket's full call graph
-beyond the naming-convention proxy used here. Beyond that: a production
+Motivated by Section~\ref{sec:falsifier}: verify Train Ticket's full call
+graph beyond the naming-convention proxy used here, and sharpen the
+override decision. Beyond that: a production
 evaluation with real incident data and fault-injection studies
 \cite{basiri2016chaos}; a repeated-run protocol isolating real effects
 from sampling noise; fine-tuning a smaller open model (Llama 3
@@ -770,11 +773,12 @@ service-topology fix (Section~\ref{sec:falsifier}) removes the RCAEval
 regression but does not yet turn it into a gain---honest, not rounded up.
 A control test shows the AIOps gain does not require decomposition: a
 single agent given the same Falsifier scores indistinguishably from
-multi-agent ($p=1.0$), consistent with concurrent evidence outside RCA
-\cite{xu2026rethinking,su2026outperform} (Section~\ref{sec:novelty}). This
+multi-agent ($p=1.0$). This
 paper's central claim is therefore not that multi-agent architecture adds
 value for LLM-based RCA, but that a specific \emph{capability}---adversarial
-verification---does, independent of agent count. All findings are reported
+verification---does, independent of agent count. Practically: skip
+decomposition, invest in adversarial verification with topology awareness,
+and confirm an LLM pipeline earns its complexity over a heuristic. All findings are reported
 because a verification or autonomy mechanism is only useful if its
 failure modes are visible; the public implementation and harness make
 all of them, and any future re-measurement, reproducible.
@@ -784,7 +788,7 @@ The author thanks the LangGraph and Google ADK communities.
 
 \begin{thebibliography}{00}
 \footnotesize
-\renewcommand{\baselinestretch}{0.93}\selectfont
+\renewcommand{\baselinestretch}{0.83}\selectfont
 \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}\setlength{\parsep}{0pt}
 
 \bibitem{beyer2016sre} B. Beyer, C. Jones, J. Petoff, and N. R. Murphy, \emph{Site Reliability Engineering: How Google Runs Production Systems}. O'Reilly, 2016.
