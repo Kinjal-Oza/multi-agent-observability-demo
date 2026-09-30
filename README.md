@@ -1,8 +1,8 @@
 # NetOpsAgent — CNSM 2026 Revision Evidence Package
 
 This package replaces the original submission's evaluation section (200 traces,
-78.5% exact-or-partial, McNemar χ²=9.19, p=0.002 — unsupported by any code, data, or
-compute trail) with a real, reproducible evaluation on two independent public datasets.
+78.5% exact-or-partial), which could not be reproduced from code or data, with a fully
+reproducible evaluation on two independent public datasets.
 Everything here was run live against the OpenAI API, once per configuration, and
 reported as-is.
 
@@ -163,3 +163,64 @@ Resolved since the last version of this package: references (37/37 now cited), F
 1 (redrawn as a vector diagram), GPT-4o/GPT-4o-mini rationale (now stated explicitly in
 Section IV-A), and this package's own staleness (it previously did not contain the
 Falsifier/topology/control scripts and results above).
+
+## Follow-up results (September 2026, preliminary)
+
+**Status:** preliminary. One run per configuration, not peer reviewed, being written up
+as a follow-up paper. Same prompts, scoring and agent roles as the paper; only the
+models change (called via OpenRouter). Code and raw per-incident outputs:
+[`followup/`](followup/).
+
+### 1. The paper's GPT-4o results reproduce
+A fresh re-run of every configuration matched each headline result within 3 points,
+with 92–100% of per-incident verdicts identical.
+
+### 2. On newer models, the multi-agent result changes
+AIOps 2020, exact match, N = 75, McNemar p.
+
+| Model pair (reasoner / telemetry) | Team | Single agent | p |
+|---|---|---|---|
+| GPT-4o / GPT-4o-mini (paper) | 22.7% | 22.7% | 1.00 |
+| GPT-4o / GPT-4o-mini (re-run) | 25.3% | 21.3% | 0.38 |
+| Claude Sonnet 5.5 / Haiku 4.5 | 44.0% | 33.3% | 0.008 |
+| Claude Opus 5.5 / Haiku 4.5 | 38.7% | 29.3% | 0.14 |
+| GPT-5.6 Sol / GPT-5.6 Luna | 38.7% | 26.7% | 0.004 |
+| Gemini 3.8 Flash / 3.5 Flash-Lite | 24.0% | 25.3% | 1.00 |
+| Llama 3.3 70B / 3.1 8B | 8.0% | 18.7% | 0.077 |
+| Llama 4 Maverick (both roles) | 6.7% | 20.0% | 0.021 |
+
+### 3. The handoff test
+Reasoner fixed as GPT-4o; only the telemetry/summarizer model changes.
+Fair context-pollution test, team vs single agent:
+
+| Summarizer | Team | Single agent |
+|---|---|---|
+| GPT-4o-mini (paper) | 4.0% | 25.3% |
+| Claude Haiku 4.5 | 14.7% | 25.3% |
+| GPT-5.6 Luna | 24.0% | 24.0% |
+
+A stronger summarizer removes the team's loss, but no summarizer alone made the
+GPT-4o team win. That happened only when both models were strong.
+
+### 4. What held across models
+- Without service topology, the Falsifier hurt on multi-service incidents (RCAEval)
+  for every model whose Falsifier actually overrode (GPT-4o, Sonnet 5.5, Opus 5.5,
+  Llama 4).
+- Self-reported confidence did not separate correct from incorrect answers on 6 of 7
+  models (Opus 5.5 partially).
+
+### Notes on the paper's numbers (checked against the raw outputs)
+None of these changes the paper's conclusions.
+- **Run-to-run swing (Section VI-B):** in `results/rcaeval_results_v2.json`, 11
+  single-agent calls failed with API rate-limit errors (HTTP 429) and were scored as
+  incorrect. On the 64 incidents that ran cleanly in both runs, the single agent scored
+  25 correct both times. The true run-to-run swing is at most ~3 points. On the 60
+  incidents where both calls succeeded, Table I's RCAEval raw-context row is 24 vs 23
+  correct.
+- **Table II, RCAEval:** the percentages compare against the single agent (42.7%);
+  the "0 corrected, 12 broken" counts compare the team before vs after the Falsifier
+  (40.0% → 24.0%).
+- **Topology-aware Falsifier:** the team stays at 40.0% before and after; there was one
+  override (a wrong answer replaced by another wrong one).
+- **Control test split:** the raw outputs give 20 / 46 / 5 / 4 (the paper reports
+  21 / 47 / 4 / 3); p = 1.0 either way.
