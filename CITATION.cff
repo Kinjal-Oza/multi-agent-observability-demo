@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, data or results, please cite the CNSM 2026 paper below."
+title: "NetOpsAgent: CNSM 2026 artifacts and cross-model follow-up"
+authors:
+  - family-names: Vaishnav
+    given-names: Kinjal
+    orcid: "https://orcid.org/0009-0005-6073-1117"
+license: MIT
+repository-code: "https://github.com/Kinjal-Oza/multi-agent-observability-demo"
+doi: 10.5281/zenodo.23170063
+version: 1.1.0
+keywords:
+  - multi-agent LLM systems
+  - AIOps
+  - root cause analysis
+  - site reliability engineering
+  - incident management
+preferred-citation:
+  type: conference-paper
+  title: "NetOpsAgent: A Hierarchical Multi-Agent LLM Framework for Autonomous Cloud Infrastructure Incident Management"
+  authors:
+    - family-names: Vaishnav
+      given-names: Kinjal
+      orcid: "https://orcid.org/0009-0005-6073-1117"
+  collection-title: "Proceedings of the 22nd International Conference on Network and Service Management (CNSM 2026)"
+  conference:
+    name: "CNSM 2026"
+    city: "Alcalá de Henares"
+    country: ES
+  publisher:
+    name: "IEEE / IFIP"
+  year: 2026

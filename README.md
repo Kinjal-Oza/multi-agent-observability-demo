@@ -1,5 +1,11 @@
 # NetOpsAgent — CNSM 2026 Revision Evidence Package
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23170063.svg)](https://doi.org/10.5281/zenodo.23170063)
+
+> **How to cite.** If you use this code, data or results, please cite:
+> K. Vaishnav, "NetOpsAgent: A Hierarchical Multi-Agent LLM Framework for Autonomous Cloud Infrastructure Incident Management," in *Proc. 22nd International Conference on Network and Service Management (CNSM 2026)*, Alcalá de Henares, Spain, 2026.
+> Artifacts: https://doi.org/10.5281/zenodo.23170063. GitHub's "Cite this repository" button gives BibTeX (from `CITATION.cff`).
+
 This package replaces the original submission's evaluation section (200 traces,
 78.5% exact-or-partial), which could not be reproduced from code or data, with a fully
 reproducible evaluation on two independent public datasets.
